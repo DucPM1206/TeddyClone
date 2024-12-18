@@ -58,12 +58,15 @@ public class ProductController {
 	@Autowired
 	private ImageService imageService;
 
-	@GetMapping("/admin/products")
-	public String homePages(Model model, @RequestParam(defaultValue = "", required = false) String id,
-			@RequestParam(defaultValue = "", required = false) String name,
-			@RequestParam(defaultValue = "", required = false) String category,
-			@RequestParam(defaultValue = "", required = false) String brand,
-			@RequestParam(defaultValue = "1", required = false) Integer page) {
+    @GetMapping("/admin/products")
+    public String homePages(Model model,
+                            @RequestParam(defaultValue = "", required = false) String id,
+                            @RequestParam(defaultValue = "", required = false) String name,
+                            @RequestParam(defaultValue = "", required = false) String category,
+                            @RequestParam(defaultValue = "", required = false) String brand,
+                            @RequestParam(defaultValue = "", required = false) Long price,
+                            @RequestParam(defaultValue = "", required = false) Long sale_price,
+                            @RequestParam(defaultValue = "1", required = false) Integer page) {
 
 		// Lấy danh sách nhãn hiệu
 		List<Brand> brands = brandService.getListBrand();
@@ -133,15 +136,17 @@ public class ProductController {
 		return "admin/product/edit";
 	}
 
-	@GetMapping("/api/admin/products")
-	public ResponseEntity<Object> getListProducts(@RequestParam(defaultValue = "", required = false) String id,
-			@RequestParam(defaultValue = "", required = false) String name,
-			@RequestParam(defaultValue = "", required = false) String category,
-			@RequestParam(defaultValue = "", required = false) String brand,
-			@RequestParam(defaultValue = "1", required = false) Integer page) {
-		Page<Product> products = productService.adminGetListProduct(id, name, category, brand, page);
-		return ResponseEntity.ok(products);
-	}
+    @GetMapping("/api/admin/products")
+    public ResponseEntity<Object> getListProducts(@RequestParam(defaultValue = "", required = false) String id,
+                                                  @RequestParam(defaultValue = "", required = false) String name,
+                                                  @RequestParam(defaultValue = "", required = false) String category,
+                                                  @RequestParam(defaultValue = "", required = false) String brand,
+                                                  @RequestParam(defaultValue = "", required = false) Long price,
+                                                  @RequestParam(defaultValue = "", required = false) Long sale_price,
+                                                  @RequestParam(defaultValue = "1", required = false) Integer page) {
+        Page<Product> products = productService.adminGetListProduct(id, name, category, brand, price, sale_price, page);
+        return ResponseEntity.ok(products);
+    }
 
 	@GetMapping("/api/admin/products/{id}")
 	public ResponseEntity<Object> getProductDetail(@PathVariable String id) {

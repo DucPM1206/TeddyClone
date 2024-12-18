@@ -22,6 +22,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     //Lấy sản phẩm theo tên
     Product findByName(String name);
 
+    //Lấy tất cả sản phẩm
     @Query(value = """
     	    SELECT SELECT pro.id, pro.created_at, pro.description, pro.image_feedback, pro.images, pro.modified_at, pro.name, pro.price, pro.sale_price, pro.slug, pro.status, pro.total_sold, pro.product_view, pro.brand_id, 
     	           COALESCE(SUM(ps.quantity), 0) AS total_quantity
@@ -41,7 +42,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
              pro.slug, pro.images, pro.image_feedback, pro.product_view, 
              pro.total_sold, pro.status, pro.created_at, pro.modified_at, 
              pro.brand_id""", nativeQuery = true)
-    	Page<Product> adminGetListProducts(String id, String name, String category, String brand, Pageable pageable);
+    Page<Product> adminGetListProducts(String id, String name, String category, String brand, Long price, Long sale_price, Pageable pageable);
 
     //Lấy sản phẩm được bán nhiều
     @Query(nativeQuery = true,name = "getListBestSellProducts")
