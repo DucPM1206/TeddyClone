@@ -49,8 +49,6 @@
                             <i class="fas fa-plus"></i></a>
                         <a href="/admin/products" class="btn btn-primary">Refresh <i
                                 class="fas fa-redo-alt"></i></a>
-                        <!-- <button class="btn btn-warning btn_export"><a th:href="@{/api/products/export/excel}">Xuất dữ liệu</a>
-                            <i class="fas fa-file-export"></i></button> -->
                     </div>
                 </div>
             </div>
@@ -111,7 +109,6 @@
                 <tbody>
                 <th:block th:each="product : ${products}">
                     <tr data-item-id="1">
-<!--                        <td><input type="checkbox" id="checkbox_${product.id}" class="myCheckbox" th:value="${product.id}"></td>-->
                         <td th:text="${product.id}"></td>
                         <td th:text="${product.name}"></td>
                         <td><img th:src="@{${product.images[0]}}" width="60px" height="60px"></td>
