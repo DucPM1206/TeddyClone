@@ -80,7 +80,7 @@ public class OrderController {
 	public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest createOrderRequest) {
 		User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
 				.getUser();
-		Order order = orderService.createOrder(createOrderRequest, user.getId());
+		Order order = orderService.createOrderAdmin(createOrderRequest, user.getId());
 		return ResponseEntity.ok(order);
 	}
 

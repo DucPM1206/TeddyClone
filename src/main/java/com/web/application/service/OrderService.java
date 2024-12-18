@@ -17,6 +17,7 @@ public interface OrderService {
 	Page<Order> adminGetListOrders(String id, String name, String phone, String status, String product, int page);
 
 	Order createOrder(CreateOrderRequest createOrderRequest, long userId);
+	Order createOrderAdmin(CreateOrderRequest createOrderRequest, long userId);
 
 	void updateDetailOrder(UpdateDetailOrder updateDetailOrder, long id, long userId);
 
