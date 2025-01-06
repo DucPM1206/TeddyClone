@@ -24,7 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     //Lấy tất cả sản phẩm
     @Query(value = """
-    	    SELECT SELECT pro.id, pro.created_at, pro.description, pro.image_feedback, pro.images, pro.modified_at, pro.name, pro.price, pro.sale_price, pro.slug, pro.status, pro.total_sold, pro.product_view, pro.brand_id, 
+    	    SELECT pro.id, pro.created_at, pro.description, pro.image_feedback, pro.images, pro.modified_at, pro.name, pro.price, pro.sale_price, pro.slug, pro.status, pro.total_sold, pro.product_view, pro.brand_id, 
     	           COALESCE(SUM(ps.quantity), 0) AS total_quantity
     	    FROM product pro
     	    RIGHT JOIN (

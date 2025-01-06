@@ -58,8 +58,65 @@ public class OrderServiceImpl implements OrderService {
 			page = 0;
 		}
 		int limit = 10;
-		Pageable pageable = PageRequest.of(page, limit, Sort.by("id").descending());
+		Pageable pageable = PageRequest.of(page, limit, Sort.by("id").ascending());
 		return orderRepository.adminGetListOrder(id, name, phone, status, product, pageable);
+	}
+
+	@Override
+	public Order createOrderAdmin(CreateOrderRequest createOrderRequest, long userId) {
+
+		// Kiểm tra sản phẩm có tồn tại
+		Optional<Product> product = productRepository.findById(createOrderRequest.getProductId());
+		if (product.isEmpty()) {
+			throw new NotFoundExp("Sản phẩm không tồn tại!");
+		}
+
+		// Kiểm tra size có sẵn
+		ProductSize productSize = productSizeRepository.checkProductAndSizeAvailable(createOrderRequest.getProductId(),
+				createOrderRequest.getSize());
+		if (productSize == null) {
+			throw new BadRequestExp("Size giày sản phẩm tạm hết, Vui lòng chọn sản phẩm khác!");
+		}
+
+		// Kiểm tra giá sản phẩm
+		if (product.get().getSalePrice() != createOrderRequest.getProductPrice()) {
+			throw new BadRequestExp("Giá sản phẩm thay đổi, Vui lòng đặt hàng lại!");
+		}
+		Order order = new Order();
+		User user = new User();
+		user.setId(userId);
+		order.setCreatedBy(user);
+		order.setBuyer(user);
+		if (createOrderRequest.getCouponCode() != "") {
+			Promotion promotion = promotionService.checkPromotion(createOrderRequest.getCouponCode());
+			if (promotion == null) {
+				throw new NotFoundExp("Mã khuyến mãi không tồn tại hoặc chưa được kích hoạt");
+			}
+			long promotionPrice = promotionService.calculatePromotionPrice(createOrderRequest.getProductPrice(),
+					promotion);
+			if (promotionPrice != createOrderRequest.getTotalPrice()) {
+				throw new BadRequestExp("Tổng giá trị đơn hàng thay đổi. Vui lòng kiểm tra và đặt lại đơn hàng");
+			}
+			Order.UsedPromotion usedPromotion = new Order.UsedPromotion(createOrderRequest.getCouponCode(),
+					promotion.getDiscountType(), promotion.getDiscountValue(), promotion.getMaximumDiscountValue());
+			order.setPromotion(usedPromotion);
+		}
+		order.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+		order.setReceiverAddress(createOrderRequest.getReceiverAddress());
+		order.setReceiverName(createOrderRequest.getReceiverName());
+		order.setReceiverPhone(createOrderRequest.getReceiverPhone());
+		order.setNote(createOrderRequest.getNote());
+		order.setSize(createOrderRequest.getSize());
+		order.setPrice(createOrderRequest.getProductPrice());
+		order.setTotalPrice(createOrderRequest.getTotalPrice());
+		order.setStatus(Contant.COUNTER_STATUS);
+		order.setQuantity(1);
+		order.setProduct(product.get());
+		orderRepository.save(order);
+		productSizeRepository.minusOneProductBySize(order.getProduct().getId(), order.getSize());
+		productRepository.plusOneProductTotalSold(order.getProduct().getId());
+		return order;
+
 	}
 
 	@Override
@@ -305,6 +362,25 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
+	public void userCancelOrder(long id, long userId, UpdateStatusOrderRequest updateStatusOrderRequest) {
+		Optional<Order> rs = orderRepository.findById(id);
+		if (rs.isEmpty()) {
+			throw new NotFoundExp("Đơn hàng không tồn tại");
+		}
+		Order order = rs.get();
+		if (order.getBuyer().getId() != userId) {
+			throw new BadRequestExp("Bạn không phải chủ nhân đơn hàng");
+		}
+		if (order.getStatus() != Contant.ORDER_STATUS) {
+			throw new BadRequestExp(
+					"Trạng thái đơn hàng không phù hợp để hủy. Vui lòng liên hệ với shop để được hỗ trợ");
+		}
+		order.setNote(updateStatusOrderRequest.getNote());
+		order.setStatus(Contant.CANCELED_STATUS);
+		orderRepository.save(order);
+	}
+
+	@Override
 	public long getCountOrder() {
 		return orderRepository.count();
 	}
@@ -337,25 +413,6 @@ public class OrderServiceImpl implements OrderService {
 			statistic.setProfit(statistic.getSales() - (statistic.getQuantity() * order.getProduct().getPrice()));
 			statisticRepository.save(statistic);
 		}
-	}
-
-	@Override
-	public void userCancelOrder(long id, long userId, UpdateStatusOrderRequest updateStatusOrderRequest) {
-		Optional<Order> rs = orderRepository.findById(id);
-		if (rs.isEmpty()) {
-			throw new NotFoundExp("Đơn hàng không tồn tại");
-		}
-		Order order = rs.get();
-		if (order.getBuyer().getId() != userId) {
-			throw new BadRequestExp("Bạn không phải chủ nhân đơn hàng");
-		}
-		if (order.getStatus() != Contant.ORDER_STATUS) {
-			throw new BadRequestExp(
-					"Trạng thái đơn hàng không phù hợp để hủy. Vui lòng liên hệ với shop để được hỗ trợ");
-		}
-		order.setNote(updateStatusOrderRequest.getNote());
-		order.setStatus(Contant.CANCELED_STATUS);
-		orderRepository.save(order);
 	}
 
 	@Override

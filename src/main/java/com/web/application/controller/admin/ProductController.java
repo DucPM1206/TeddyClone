@@ -75,7 +75,7 @@ public class ProductController {
 		List<Category> categories = categoryService.getListCategories();
 		model.addAttribute("categories", categories);
 		// Lấy danh sách sản phẩm
-		Page<Product> products = productService.adminGetListProduct(id, name, category, brand, page);
+		Page<Product> products = productService.adminGetListProduct(id, name, category, brand, price, sale_price, page);
 		products.getContent().stream().peek(product -> {
 			long totalQuantity = productSizeRepository.getTotalQuantityByProductId(product.getId());
 			product.setTotalQuantity(totalQuantity);
