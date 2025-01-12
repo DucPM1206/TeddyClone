@@ -12,11 +12,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
+
 @Setter
 @Getter
 @ToString
 public class ShortProductInfoDTO {
 	private String id;
+	
+	private String productCode;
 
 	private String name;
 
@@ -26,31 +30,33 @@ public class ShortProductInfoDTO {
 	
 	List<Integer> quantitySizes;
 
-	public ShortProductInfoDTO(String id, String name) {
+	public ShortProductInfoDTO(String id, String productCode, String name) {
 		this.id = id;
+		this.productCode = productCode;
 		this.name = name;
 	}
 
-	public ShortProductInfoDTO(String id, String name, long price, Object availableSizes, Object quantitySizes) {
+	public ShortProductInfoDTO(String id, String productCode, String name, long price, Object availableSizes, Object quantitySizes) {
 		this.id = id;
+		this.productCode = productCode;
 		this.name = name;
 		this.price = price;
 		if (availableSizes != null) {
 			try {
-				String sizesStr = (String) availableSizes;
-				this.availableSizes = Arrays.stream(sizesStr.split(",")).map(String::trim).map(Integer::parseInt)
+				this.availableSizes = Arrays.stream(availableSizes.toString().split(","))
+						.map(Integer::parseInt)
 						.collect(Collectors.toList());
 			} catch (Exception e) {
-				this.availableSizes = null;
+				this.availableSizes = new ArrayList<>();
 			}
 		}
 		if (quantitySizes != null) {
 			try {
-				String sizesStr = (String) quantitySizes;
-				this.quantitySizes = Arrays.stream(sizesStr.split(",")).map(String::trim).map(Integer::parseInt)
+				this.quantitySizes = Arrays.stream(quantitySizes.toString().split(","))
+						.map(Integer::parseInt)
 						.collect(Collectors.toList());
 			} catch (Exception e) {
-				this.quantitySizes = null;
+				this.quantitySizes = new ArrayList<>();
 			}
 		}
 	}

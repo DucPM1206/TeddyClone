@@ -56,17 +56,23 @@
                 <div class="row product-row">
                     <th:block th:each="product : ${listProduct}">
                         <div class="col-6 col-sm-4">
-                            <div class="product-default inner-quickview inner-icon">
+                            <div class="product-default inner-quickview inner-icon shadow-sm">
                                 <figure>
                                     <a th:href="@{/{slug}/{id}(id=${product.id},slug=${product.slug})}">
                                         <img th:src="@{${product.images}}" th:alt="${product.name}">
                                     </a>
                                 </figure>
-                                <div class="product-details">
+                                <div class="product-details px-5 pb-5">
                                     <h2 class="product-title">
                                         <a th:href="@{/{slug}/{id}(id=${product.id},slug=${product.slug})}"
                                            th:text="${product.name}"></a>
                                     </h2>
+                                    <div class="ratings-container">
+                                        <div class="product-ratings">
+                                            <span class="ratings" style="width:80%"></span>
+                                        </div>
+                                    </div>
+
                                     <div class="price-box">
                                         <th:block th:if="${product.promotionPrice}">
                                             <span class="product-price"
@@ -79,6 +85,32 @@
                                                   th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') +' đ'}"></span>
                                         </th:block>
                                     </div><!-- End .price-box -->
+
+                                    <div class="product-desc">
+                                        <p th:utext="${product.description}"></p>
+                                    </div>
+
+                                    <div class="product-filters-container">
+                                        <div class="product-single-filter">
+                                            <label>Size:</label>
+                                            <select class="form-select" id="product-size">
+                                                <option th:each="size : ${sizeVn}" th:value="${size}" th:text="${size}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="product-action">
+                                        <button class="btn-icon btn-add-cart" 
+                                        type="button"
+                                            th:data-product-code="${product.productCode}"
+                                            th:data-product-name="${product.name}"
+                                            th:data-product-price="${product.price}"
+                                            th:data-product-thumbnail="${product.images}"
+                                            onclick="addToCartFromData(this)"
+                                            >
+                                            <i class="icon-bag"></i>Add to Cart
+                                        </button>
+                                    </div>
                                 </div><!-- End .product-details -->
                             </div>
                         </div><!-- End .col-sm-4 -->
@@ -189,16 +221,17 @@
     <script type="text/javascript" th:src="@{/adminlte/pagination/jquery.simplePagination.js}"></script>
     <script type="text/javascript" th:src="@{/adminlte/js/table.js}"></script>
     <script th:inline="javascript">
-        let brandIds = [[${brandIds}]];
-        let categoryIds = [[${categoryIds}]];
-        let currentPage = [[${currentPage}]];
-        let totalPages = [[${totalPages}]];
-        let checkedCategories = [];
-        let checkedBrands = [];
-        let checkedSizes = [];
-        let minPrice = 0;
-        let maxPrice = 0;
-
+        /*<![CDATA[*/
+        var brandIds = /*[[${brandIds}]]*/ [];
+        var categoryIds = /*[[${categoryIds}]]*/ [];
+        var currentPage = /*[[${currentPage}]]*/ 0;
+        var totalPages = /*[[${totalPages}]]*/ 0;
+        var checkedCategories = [];
+        var checkedBrands = [];
+        var checkedSizes = [];
+        var minPrice = 0;
+        var maxPrice = 0;
+        /*]]>*/
         $(function () {
             pagination();
         });
@@ -368,6 +401,12 @@
                                     <h2 class="product-title">
                                         <a href="/${product.slug}/${product.id}">${product.name}</a>
                                     </h2>
+                                    <div class="ratings-container">
+                                        <div class="product-ratings">
+                                            <span class="ratings" style="width:80%"></span>
+                                        </div>
+                                    </div>
+
                                     <div class="price-box">`
                     if (product.promotionPrice > 0) {
                         html += `
@@ -377,6 +416,29 @@
                         html += `<span class="product-price text-price">${product.price}</span> &#x20AB;`
                     }
                     html += `
+                                    </div>
+                                    <div class="product-desc">
+                                        <p>${product.description}</p>
+                                    </div>
+
+                                    <div class="product-filters-container">
+                                        <div class="product-single-filter">
+                                            <label>Size:</label>
+                                            <select class="form-control form-select" id="product-size">
+                                                <option th:each="size : ${sizeVn}" th:value="${size}" th:text="${size}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="product-action">
+                                        <button class="btn-icon btn-add-cart" 
+                                            th:data-product-code="${product.productCode}"
+                                            th:data-product-name="${product.name}"
+                                            th:data-product-price="${product.price}"
+                                            th:data-product-thumbnail="${product.images}"
+                                            onclick="addToCartFromData(this)">
+                                            <i class="icon-bag"></i>Add to Cart
+                                        </button>
                                     </div>
                                </div>
                            </div>
@@ -389,6 +451,17 @@
                 $('.product-row').html("");
                 $('.no-products').css('display', 'flex');
             }
+        }
+
+        function addToCartFromData(button) {
+            var productCode = button.getAttribute('data-product-code');
+            var productName = button.getAttribute('data-product-name');
+            var productPrice = button.getAttribute('data-product-price');
+            var productThumbnail = button.getAttribute('data-product-thumbnail');
+            var size = document.getElementById('product-size').value;
+            addToCart(productCode, productName, size, productPrice, productThumbnail);
+            // Show notification
+            toastr.success("Đã thêm sản phẩm mới vào giỏ hàng");
         }
 
             $("#from-price").keyup(function () {

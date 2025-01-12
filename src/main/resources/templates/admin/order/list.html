@@ -80,11 +80,12 @@
                         <th>
                             <select name="status" class="form-control search-select" id="status">
                                 <option value="">Tất cả</option>
+                                <option value="0">Chờ xác nhận</option>
                                 <option value="1">Chờ lấy hàng</option>
                                 <option value="2">Đang giao hàng</option>
                                 <option value="3">Đã giao hàng</option>
-                                <option value="4">Đơn hàng bị trả lại</option>
-                                <option value="5">Đơn hàng bị hủy</option>
+                                <option value="4">Đơn hàng đã trả lại</option>
+                                <option value="5">Đơn hàng đã hủy</option>
                             </select>
                         </th>
                         <th>
@@ -111,14 +112,19 @@
                         <td th:text="${order.receiverName}"></td>
                         <td th:text="${order.receiverPhone}"></td>
                         <td>
+                            <span th:if="${order.status} == 0" class="badge badge-warning">Chờ xác nhận</span>
                             <span th:if="${order.status} == 1" class="badge badge-warning">Chờ lấy hàng</span>
                             <span th:if="${order.status} == 2" class="badge badge-primary">Đang giao hàng</span>
                             <span th:if="${order.status} == 3" class="badge badge-success">Đã giao hàng</span>
-                            <span th:if="${order.status} == 4" class="badge badge-danger">Đơn hàng bị trả lại</span>
-                            <span th:if="${order.status} == 5" class="badge badge-light">Đơn hàng bị hủy</span>
+                            <span th:if="${order.status} == 4" class="badge badge-danger">Đơn hàng đã trả lại</span>
+                            <span th:if="${order.status} == 5" class="badge badge-light">Đơn hàng đã hủy</span>
                             <span th:if="${order.status} == 6" class="badge badge-success">Bán hàng tại quầy</span>
                         </td>
-                        <td th:text="${order.product.name}"></td>
+                        <td>
+                            <th:block th:each="detail : ${order.orderDetails}">
+                                <div th:text="${detail.product.name}"></div>
+                            </th:block>
+                        </td>
                         <td>
                             <span th:text="${#dates.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
                         </td>
@@ -129,7 +135,10 @@
                             <span th:text="${order.totalPrice}"></span>
                         </td>
                        <td class="actions">
-                            <a th:href="@{/admin/orders/update/{id}(id=${order.id})}" class="on-default edit-row"><i class="fas fa-pencil-alt"></i></a>
+                            <a th:href="@{/admin/orders/update/{id}(id=${order.id})}" class="on-default edit-row" data-toggle="tooltip" title="Chỉnh sửa"><i class="fas fa-pencil-alt"></i></a>
+                            <a th:if="${order.status} == 0" href="#" class="confirm-order" th:data-id="${order.id}" data-toggle="tooltip" title="Xác nhận đơn">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </a>
                         </td>
                     </tr>
                 </th:block>
@@ -183,6 +192,37 @@
             $('#page').val(page)
 
             pagination([[${totalPages}]],[[${currentPage}]])
+        });
+
+        $(document).ready(function() {
+            // Initialize tooltips
+            $('[data-toggle="tooltip"]').tooltip();
+            
+            // Handle confirm order button click
+            $(".confirm-order").click(function(e) {
+                e.preventDefault();
+                const orderId = $(this).data('id');
+                
+                if(confirm('Bạn có chắc chắn muốn xác nhận đơn hàng này?')) {
+                    $.ajax({
+                        url: "/api/admin/orders/" + orderId + "/status",
+                        type: "PUT",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            status: 1
+                        }),
+                        success: function(data) {
+                            toastr.success("Xác nhận đơn hàng thành công");
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                        },
+                        error: function(data) {
+                            toastr.error(data.responseJSON.message || "Có lỗi xảy ra");
+                        }
+                    });
+                }
+            });
         });
     </script>
 </th:block>

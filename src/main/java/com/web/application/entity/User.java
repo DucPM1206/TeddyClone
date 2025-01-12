@@ -50,8 +50,7 @@ public class User {
     private List<String> roles;
     @Column(name = "status",columnDefinition = "BOOLEAN")
     private boolean status;
-    @Column(name = "created_at")
-
+    @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
     @Column(name = "modified_at")
     private Timestamp modifiedAt;

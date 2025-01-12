@@ -70,9 +70,9 @@ public class HomeController {
     }
 
     @GetMapping("/{slug}/{id}")
-    public String getProductDetail(Model model, @PathVariable String id){
+    public String getProductDetail(Model model, @PathVariable String id) {
 
-        //Lấy thông tin sản phẩm
+        // Lấy thông tin sản phẩm
         DetailProductInfoDTO product;
         try {
             product = productService.getDetailProductById(id);
@@ -84,13 +84,13 @@ public class HomeController {
         }
         model.addAttribute("product", product);
 
-        //Lấy sản phẩm liên quan
+        // Lấy sản phẩm liên quan
         List<ProductInfoDTO> relatedProducts = productService.getRelatedProducts(id);
         model.addAttribute("relatedProducts", relatedProducts);
 
-        //Lấy danh sách nhãn hiệu
+        // Lấy danh sách nhãn hiệu
         List<Brand> brands = brandService.getListBrand();
-        model.addAttribute("brands",brands);
+        model.addAttribute("brands", brands);
 
         // Lấy size có sẵn
         List<Integer> availableSizes = productService.getListAvailableSize(id);
@@ -108,9 +108,9 @@ public class HomeController {
     }
 
     @GetMapping("/dat-hang")
-    public String getCartPage(Model model, @RequestParam String id,@RequestParam int size){
+    public String getCartPage(Model model, @RequestParam String id, @RequestParam int size) {
 
-        //Lấy chi tiết sản phẩm
+        // Lấy chi tiết sản phẩm
         DetailProductInfoDTO product;
         try {
             product = productService.getDetailProductById(id);
@@ -121,12 +121,12 @@ public class HomeController {
         }
         model.addAttribute("product", product);
 
-        //Validate size
+        // Validate size
         if (size < 35 || size > 42) {
             return "error/404";
         }
 
-        //Lấy danh sách size có sẵn
+        // Lấy danh sách size có sẵn
         List<Integer> availableSizes = productService.getListAvailableSize(id);
         model.addAttribute("availableSizes", availableSizes);
         boolean notFoundSize = true;
@@ -138,29 +138,30 @@ public class HomeController {
         }
         model.addAttribute("notFoundSize", notFoundSize);
 
-        //Lấy danh sách size
+        // Lấy danh sách size
         model.addAttribute("sizeVn", Contant.SIZE_VN);
         model.addAttribute("size", size);
 
         return "shop/payment";
     }
 
-    @PostMapping("/api/orders")
-    public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest createOrderRequest) {
-        User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
-        Order order = orderService.createOrder(createOrderRequest, user.getId());
+    // @PostMapping("/api/orders")
+    // public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest createOrderRequest) {
+    //     User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+    //             .getUser();
+    //     Order order = orderService.createOrder(createOrderRequest, user.getId());
 
-        return ResponseEntity.ok(order.getId());
-    }
+    //     return ResponseEntity.ok(order.getId());
+    // }
 
     @GetMapping("/products")
-    public ResponseEntity<Object> getListBestSellProducts(){
+    public ResponseEntity<Object> getListBestSellProducts() {
         List<ProductInfoDTO> productInfoDTOS = productService.getListBestSellProducts();
         return ResponseEntity.ok(productInfoDTOS);
     }
 
     @GetMapping("/san-pham")
-    public String getProductShopPages(Model model){
+    public String getProductShopPages(Model model) {
 
         //Lấy danh sách nhãn hiệu
         List<Brand> brands = brandService.getListBrand();
@@ -171,16 +172,16 @@ public class HomeController {
         }
         model.addAttribute("brandIds", brandIds);
 
-        //Lấy danh sách danh mục
+        // Lấy danh sách danh mục
         List<Category> categories = categoryService.getListCategories();
         model.addAttribute("categories",categories);
         List<Long> categoryIds = new ArrayList<>();
         for (Category category : categories) {
-            categoryIds.add(category.getId());
+        categoryIds.add(category.getId());
         }
         model.addAttribute("categoryIds", categoryIds);
 
-        //Danh sách size của sản phẩm
+        // Danh sách size của sản phẩm
         model.addAttribute("sizeVn", Contant.SIZE_VN);
 
         //Lấy danh sách sản phẩm
@@ -217,7 +218,8 @@ public class HomeController {
     }
 
     @GetMapping("/tim-kiem")
-    public String searchProduct(Model model, @RequestParam(required = false) String keyword, @RequestParam(required = false) Integer page) {
+    public String searchProduct(Model model, @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer page) {
 
         PageableDTO result = productService.searchProductByKeyword(keyword, page);
 
@@ -252,15 +254,17 @@ public class HomeController {
     }
 
     @GetMapping("lien-he")
-    public String contact(){
+    public String contact() {
         return "shop/lien-he";
     }
+
     @GetMapping("huong-dan")
-    public String buyGuide(){
+    public String buyGuide() {
         return "shop/buy-guide";
     }
+
     @GetMapping("doi-hang")
-    public String doiHang(){
+    public String doiHang() {
         return "shop/doi-hang";
     }
 

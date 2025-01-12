@@ -107,31 +107,26 @@ public class ProductController {
 
 	@GetMapping("/admin/products/{slug}/{id}")
 	public String getProductUpdatePage(Model model, @PathVariable String id) {
-
-		// Lấy thông tin sản phẩm theo id
+		// Get product information
 		Product product = productService.getProductById(id);
+		System.out.println(product.getId());
 		model.addAttribute("product", product);
 
-		// Lấy danh sách ảnh của user
-		User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
-				.getUser();
-		List<String> images = imageService.getListImageOfUser(user.getId());
-		model.addAttribute("images", images);
+		// Get product sizes
+		List<ProductSize> productSizes = productSizeRepository.findByProductId(id);
+		model.addAttribute("productSizes", productSizes);
 
-		// Lấy danh sách danh mục
-		List<Category> categories = categoryService.getListCategories();
-		model.addAttribute("categories", categories);
-
-		// Lấy danh sách nhãn hiệu
+		// Get brands
 		List<Brand> brands = brandService.getListBrand();
 		model.addAttribute("brands", brands);
 
-		// Lấy danh sách size
-		model.addAttribute("sizeVN", Contant.SIZE_VN);
+		// Get categories
+		List<Category> categories = categoryService.getListCategories();
+		model.addAttribute("categories", categories);
 
-		// Lấy size của sản phẩm
-		List<ProductSize> productSizes = productService.getListSizeOfProduct(id);
-		model.addAttribute("productSizes", productSizes);
+		// Get available sizes
+		List<Integer> sizeVN = List.of(35, 36, 37, 38, 39, 40, 41, 42, 43);
+		model.addAttribute("sizeVN", sizeVN);
 
 		return "admin/product/edit";
 	}

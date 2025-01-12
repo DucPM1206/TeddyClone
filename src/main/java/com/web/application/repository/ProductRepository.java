@@ -22,26 +22,33 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     //Lấy sản phẩm theo tên
     Product findByName(String name);
 
+    //Lấy sản phẩm theo mã sản phẩm
+    Product findByProductCode(String productCode);
+
     //Lấy tất cả sản phẩm
     @Query(value = """
-    	    SELECT pro.id, pro.created_at, pro.description, pro.image_feedback, pro.images, pro.modified_at, pro.name, pro.price, pro.sale_price, pro.slug, pro.status, pro.total_sold, pro.product_view, pro.brand_id, 
-    	           COALESCE(SUM(ps.quantity), 0) AS total_quantity
-    	    FROM product pro
-    	    RIGHT JOIN (
-    	        SELECT DISTINCT p.*
-    	        FROM product p
-    	        INNER JOIN product_category pc ON p.id = pc.product_id
-    	        INNER JOIN category c ON c.id = pc.category_id
-    	        WHERE p.id LIKE CONCAT('%',?1,'%')
-    	          AND p.name LIKE CONCAT('%',?2,'%')
-    	          AND c.id LIKE CONCAT('%',?3,'%')
-    	          AND p.brand_id LIKE CONCAT('%',?4,'%')
-    	    ) AS tb1 ON pro.id = tb1.id
-    	    LEFT JOIN product_size ps ON ps.product_id = pro.id
-    	    GROUP BY pro.id, pro.name, pro.description, pro.price, pro.sale_price, 
-             pro.slug, pro.images, pro.image_feedback, pro.product_view, 
-             pro.total_sold, pro.status, pro.created_at, pro.modified_at, 
-             pro.brand_id""", nativeQuery = true)
+            SELECT pro.id, pro.product_code, pro.created_at, pro.description, pro.image_feedback, pro.images, 
+                   pro.modified_at, pro.name, pro.price, pro.sale_price, pro.slug, pro.status, 
+                   pro.total_sold, pro.product_view, pro.brand_id, 
+                   COALESCE(SUM(ps.quantity), 0) AS total_quantity
+            FROM product pro
+            RIGHT JOIN (
+                SELECT DISTINCT p.id, p.product_code, p.created_at, p.description, p.image_feedback, 
+                       p.images, p.modified_at, p.name, p.price, p.sale_price, p.slug, p.status, 
+                       p.total_sold, p.product_view, p.brand_id
+                FROM product p
+                INNER JOIN product_category pc ON p.id = pc.product_id
+                INNER JOIN category c ON c.id = pc.category_id
+                WHERE p.id LIKE CONCAT('%',?1,'%')
+                  AND p.name LIKE CONCAT('%',?2,'%')
+                  AND c.id LIKE CONCAT('%',?3,'%')
+                  AND p.brand_id LIKE CONCAT('%',?4,'%')
+            ) AS tb1 ON pro.id = tb1.id
+            LEFT JOIN product_size ps ON ps.product_id = pro.id
+            GROUP BY pro.id, pro.product_code, pro.name, pro.description, pro.price, pro.sale_price, 
+                     pro.slug, pro.images, pro.image_feedback, pro.product_view, 
+                     pro.total_sold, pro.status, pro.created_at, pro.modified_at, 
+                     pro.brand_id""", nativeQuery = true)
     Page<Product> adminGetListProducts(String id, String name, String category, String brand, Long price, Long sale_price, Pageable pageable);
 
     //Lấy sản phẩm được bán nhiều
@@ -127,4 +134,26 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     @Query(name = "getProductOrders",nativeQuery = true)
     List<ChartDTO> getProductOrders(Pageable pageable, Integer moth, Integer year);
+
+    @Query(value = "SELECT p.id, p.product_code, p.name, p.slug, p.sale_price AS price, " +
+           "p.product_view AS views, p.total_sold, p.description, " +
+           "JSON_VALUE(p.images, '$[0]') AS images " +
+           "FROM product p " +
+           "INNER JOIN product_category pc ON p.id = pc.product_id " +
+           "WHERE p.status = 1 " +
+           "AND p.brand_id IN (:brandIds) " +
+           "AND pc.category_id IN (:categoryIds) " +
+           "AND p.sale_price > :minPrice " +
+           "AND p.sale_price < :maxPrice " +
+           "GROUP BY p.id, p.product_code, p.name, p.slug, p.sale_price, " +
+           "p.product_view, p.total_sold, p.description, p.images " +
+           "ORDER BY p.id " +
+           "OFFSET :offset ROWS " +
+           "FETCH NEXT :limit ROWS ONLY", nativeQuery = true)
+    List<Product> findProductsByFilters(@Param("brandIds") List<Long> brandIds,
+                                      @Param("categoryIds") List<Long> categoryIds,
+                                      @Param("minPrice") long minPrice,
+                                      @Param("maxPrice") long maxPrice,
+                                      @Param("offset") int offset,
+                                      @Param("limit") int limit);
 }

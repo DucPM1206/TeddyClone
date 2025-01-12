@@ -14,11 +14,11 @@ import java.util.ArrayList;
 public class ProductDTO {
     private String id;
     private String name;
-    private  String description;
+    private String description;
     private long price;
     private long salePrice;
     private long totalSold;
     private int status;
-    private ArrayList<String> images;
-    private ArrayList<String> feedBackImages;
+    private ArrayList<String> productImages;
+    private ArrayList<String> feedbackImages;
 }

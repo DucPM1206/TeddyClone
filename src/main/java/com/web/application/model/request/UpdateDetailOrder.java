@@ -29,6 +29,9 @@ public class UpdateDetailOrder {
     @JsonProperty("total_price")
     private long totalPrice;
 
+    @JsonProperty("discount")
+    private long discount;
+
     @JsonProperty("product_price")
     private long productPrice;
 }

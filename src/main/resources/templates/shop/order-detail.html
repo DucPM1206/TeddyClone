@@ -17,8 +17,16 @@
     </th:block>
 </head>
 <body>
-
 <main id="main-content" class="container">
+    
+<th:block id="js-resources">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        formatMoney();
+    </script>
+</th:block>
     <div class="row">
         <div class="col-lg-3">
             <div class="left-sidebar">
@@ -39,184 +47,67 @@
         </div>
         <div class="col-lg-9 main-content-wrapper">
             <div class="main-content">
-                <div class="header"><a class="go-back-previous-page" href="/tai-khoan/lich-su-giao-dich"><i class="fas fa-chevron-left"></i> Trở lại</a>
+                <div class="header">
+                    <a class="go-back-previous-page" href="/tai-khoan/lich-su-giao-dich">
+                        <i class="fas fa-chevron-left"></i> Trở lại
+                    </a>
                     <div class="order-status-wrapper">
                         <div class="order-number-wrapper">Mã đơn <span class="order-number" th:text="'#'+${order.id}"></span></div>
-                        <div class="status" th:text="${order.statusText}"></div>
+                        <div class="status" th:switch="${order.status}">
+                            <span th:case="0">Chờ xác nhận</span>
+                            <span th:case="1">Chờ lấy hàng</span>
+                            <span th:case="2">Đang giao hàng</span>
+                            <span th:case="3">Đã giao hàng</span>
+                            <span th:case="4">Đơn hàng đã trả lại</span>
+                            <span th:case="5">Đơn hàng đã hủy</span>
+                            <span th:case="*">Không xác định</span>
+                        </div>
                     </div>
                 </div>
                 <div class="break-line"></div>
-                <div class="item">
+                <!-- Iterate through order items -->
+                <div class="item" th:each="item : ${order.orderItems}">
                     <div class="product-info-wrapper">
-                        <div class="thumbnails"><img class="img-fluid" th:src="${order.productImg}" th:alt="${order.productName}"/></div>
-                        <div class="product-info"><span class="name" th:text="${order.productName}"></span>
-                            <div class="size"><span th:text="${order.sizeVn}"></span></div>
+                        <div class="thumbnails">
+                            <img class="img-fluid" th:src="${item.productImage}" th:alt="${item.productName}"/>
+                        </div>
+                        <div class="product-info">
+                            <span class="name" th:text="${item.productName}"></span>
+                            <div class="size">Size: <span th:text="${item.size}"></span></div>
+                            <div class="quantity">Số lượng: <span th:text="${item.quantity}"></span></div>
                         </div>
                     </div>
-                    <div class="price asks-price"><span class="text-price" th:text="${order.productPrice}"></span> &#x20AB;</div>
-                    <div class="shipping-and-price-wrapper">
-                        <div class="shipping-wrapper">
-                            <div class="title">Địa chỉ giao hàng</div>
-                            <div class="buyer-name" th:text="${order.receiverName}"></div>
-                            <div class="shipping-address" th:text="${order.receiverAddress}"></div>
-                            <div class="phone" th:text="${order.receiverPhone}"></div>
-                        </div>
-                        <div class="price-wrapper">
-                            <div class="sub-price-wrapper price">Tạm tính<span><span class="text-price" th:text="${order.productPrice}"></span> &#x20AB;</span></div>
-                            <div class="shipping-price-wrapper price">Khuyến mãi<span><span class="text-price" th:text="${order.productPrice} - ${order.totalPrice}"></span> &#x20AB;</span></div>
-                            <div class="total-price-wrapper price">Thành tiền<span class="total-price"><span class="text-price" th:text="${order.totalPrice}"></span> &#x20AB;</span></div>
-                        </div>
+                    <div class="price asks-price">
+                        <span class="text-price" th:text="${item.productPrice}"></span> &#x20AB;
                     </div>
-                    <button th:if="${canReturn} == true" class="btn btn-danger red-btn return-btn" data-toggle="modal" data-target="#returnProduct">Trả Hàng</button>
-                    <button th:if="${canCancel} == true" class="btn btn-primary red-btn cancel-btn" data-toggle="modal" data-target="#cancelProduct" th:data-order="${order.id}">Hủy đơn hàng</button>
                 </div>
-                <div class="item-small">
-                    <div class="order-number-wrapper">Mã đơn <span class="order-number" th:text="'#'+${order.id}"></span></div>
-                    <div class="item-info-wrapper">
-                        <div class="product-info-wrapper">
-                            <div class="product-info"><span class="name" th:text="${order.productName}"></span>
-                                <div class="size"><span th:text="${order.sizeVn}"></span></div>
-                            </div>
-                        </div>
-                        <div class="price asks-price"><span class="text-price" th:text="${order.productPrice}"></span> &#x20AB;</div>
-                        <div class="shipping-and-price-wrapper">
-                            <div class="shipping-wrapper">
-                                <div class="title status" th:text="${order.statusText}"></div>
-                                <div class="buyer-name" th:text="${order.receiverName}"></div>
-                                <div class="shipping-address" th:text="${order.receiverAddress}"></div>
-                                <div class="phone" th:text="${order.receiverPhone}"></div>
-                            </div>
-                            <div class="price-wrapper">
-                                <div class="sub-price-wrapper price">Tạm tính<span><span class="text-price" th:text="${order.productPrice}"></span> &#x20AB;</span></div>
-                                <div class="shipping-price-wrapper price">Khuyến mãi<span><span class="text-price" th:text="${order.productPrice} - ${order.totalPrice}"></span> &#x20AB;</span></div>
-                                <div class="total-price-wrapper price">Thành tiền<span class="total-price"><span class="text-price" th:text="${order.totalPrice}"></span> &#x20AB;</span></div>
-                            </div>
-                        </div>
-                        <button th:if="${canReturn} == true" class="btn btn-danger red-btn return-btn" data-toggle="modal" data-target="#returnProduct">Trả Hàng</button>
-                        <button th:if="${canCancel} == true" class="btn btn-primary red-btn cancel-btn" data-toggle="modal" data-target="#cancelProduct">Hủy đơn hàng</button>
+                
+                <div class="px-5">
+                    <div class="shipping-wrapper">
+                        <div class="title">Địa chỉ giao hàng</div>
+                        <div>Người nhận: <span th:text="${order.receiverName}"></span></div>
+                        <div>Địa chỉ: <span th:text="${order.receiverAddress}"></span></div>
+                        <div>Số điện thoại: <span th:text="${order.receiverPhone}"></span></div>
                     </div>
+                    <div class="price-wrapper">
+                        <div class="total-price-wrapper price">
+                            Thành tiền<span class="total-price">
+                                <span class="text-price" th:text="${order.totalPrice}"></span> &#x20AB;
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end my-3">
+                    <button th:if="${canReturn} == true" class="btn btn-danger red-btn return-btn mx-auto" 
+                            data-toggle="modal" data-target="#returnProduct">Trả Hàng</button>
+                    <button th:if="${canCancel} == true" class="btn btn-primary red-btn cancel-btn mx-auto" 
+                            data-toggle="modal" data-target="#cancelProduct" th:data-order="${order.id}">Hủy đơn hàng</button>
                 </div>
             </div>
         </div>
     </div>
-<!--    Hủy hàng-->
-    <div class="modal fade" id="cancelProduct" tabindex="-1">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="cancelLabel">Bạn có chắc chắn muốn hủy đơn hàng không?</h5>
-                </div>
-                <div class="modal-body">
-                    <div class="new-password-confirm item-row">
-                        <div class="text required-label">Lý do hủy đơn</div>
-                        <div class="password-wrapper-in">
-                            <input class="form-control" type="text" id="noteCancel"/>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn" type="button" data-dismiss="modal">Huỷ bỏ</button>
-                    <button class="btn btn-primary red-btn btn-confirm-cancel-product" th:data-order="${order.id}" type="button">Đồng ý</button>
-                </div>
-            </div>
-        </div>
-    </div>
-<!--    Trả hàng-->
-    <div class="modal fade" id="returnProduct" tabindex="-1">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="returnLabel">Bạn có chắc chắn muốn trả hàng không?</h5>
-                </div>
-                <div class="modal-body">
-                    <div class="new-password-confirm item-row">
-                        <div class="text required-label">Lý do trả hàng</div>
-                        <div class="password-wrapper-in">
-                            <input class="form-control" type="text" id="noteReturn"/>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn" type="button" data-dismiss="modal">Huỷ bỏ</button>
-                    <button class="btn btn-primary red-btn btn-confirm-return-product" th:data-order="${order.id}" type="button">Đồng ý</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div th:replace="shop/order-detail-modals"></div>
 </main>
 
-<th:block id="js-resources">
-    <script>
-        formatMoney();
-
-        $('.btn-confirm-cancel-product').click(function() {
-            let isValid = true;
-            let noteValue = $("#noteCancel").val();
-            let orderId = $(this).data("order");
-            if (noteValue == "") {
-                noteInvalid = $("#noteCancel").next();
-                noteInvalid.css('display', 'block');
-                noteInvalid.html('Vui lòng nhập lý do');
-                isValid = false;
-            }
-            if(isValid) {
-                req = {
-                    note: noteValue,
-                }
-                var myJSON = JSON.stringify(req);
-                $.ajax({
-                    url: '/api/cancel-order/' + orderId,
-                    type: 'POST',
-                    data: myJSON,
-                    contentType: "application/json; charset=utf-8",
-                    success: function (data) {
-                        toastr.success("Hủy đơn hàng thành công");
-                        $('.status').html("Đã hủy");
-                        $('.modal').modal('hide');
-                        $('.cancel-btn').remove();
-                    },
-                    error: function (data) {
-                        toastr.warning(data.responseJSON.message);
-                    }
-                })
-            }
-        })
-        
-        $('.btn-confirm-return-product').click(function() {
-        	let isValid = true;
-        	let noteValue = $("#noteReturn").val();
-            let orderId = $(this).data("order");
-            if (noteValue == "") {
-                noteInvalid = $("#noteReturn").next();
-                noteInvalid.css('display', 'block');
-                noteInvalid.html('Vui lòng nhập lý do');
-                isValid = false;
-            } 
-            if(isValid){
-            	req = {
-                    note: noteValue,
-                }
-            	var myJSON = JSON.stringify(req);
-            	$.ajax({
-                    url: '/api/return-order/'+orderId,
-                    type: 'POST',
-                    data: myJSON,
-                    contentType: "application/json; charset=utf-8",
-                    success: function(data) {
-                        toastr.success("Trả đơn hàng thành công");
-                        $('.status').html("Đã trả hàng");
-                        $('.modal').modal('hide');
-                        $('.return-btn').remove();
-                    },
-                    error: function(data) {
-                        toastr.warning(data.responseJSON.message);
-                    }
-                }); 
-            }
-        });
-    </script>
-</th:block>
 </body>
 </html>

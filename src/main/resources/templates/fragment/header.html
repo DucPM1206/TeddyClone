@@ -30,7 +30,19 @@
                     <h6>Hotline <a href="tel:#" class="text-dark font1">0345239051</a></h6>
                 </div>
 
-                <a href="#" data-toggle="modal" data-target="#exampleModal" class="header-icon account-setting"><i class="icon-user-2"></i></a>
+                <div class="header-right">
+                    <!-- Add Cart Icon -->
+                    <div class="dropdown cart-dropdown">
+                        <a href="#" class="dropdown-toggle" role="button" data-toggle="modal" data-target="#cartModal">
+                            <i class="icon-shopping-cart"></i>
+                            <span id="cart-count" class="cart-count">0</span>
+                        </a>
+                    </div>
+                    <!-- End Cart Icon -->
+                     <div class="ml-3">
+                         <a href="#" data-toggle="modal" data-target="#exampleModal" class="header-icon account-setting"><i class="icon-user-2"></i></a>
+                     </div>
+                </div>
             </div><!-- End .header-right -->
         </div><!-- End .container -->
     </div><!-- End .header-middle -->

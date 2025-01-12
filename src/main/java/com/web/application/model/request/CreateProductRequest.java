@@ -43,9 +43,19 @@ public class CreateProductRequest {
 
     @NotNull(message = "Danh sách ảnh trống!")
     @JsonProperty("product_images")
-    private ArrayList<String> images;
+    private ArrayList<String> productImages;
 
-    @JsonProperty("feed_back_images")
-    private ArrayList<String> feedBackImages;
+    @JsonProperty("feedback_images")
+    private ArrayList<String> feedbackImages;
+
+    @NotBlank(message = "Mã sản phẩm trống!")
+    private String productCode;
+
+    @NotNull(message = "Kích thước sản phẩm trống!")
+    private ArrayList<Integer> sizes;
+
+    @NotNull(message = "Số lượng sản phẩm trống!")
+    private ArrayList<Integer> quantities;
+
     private int status;
 }

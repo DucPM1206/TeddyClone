@@ -77,6 +77,12 @@
                                             </div>
                                             <textarea class="textarea" id="description" name="description"></textarea>
                                         </div>
+                                        <div class="form-group">
+                                            <div>
+                                                <label class="required-label" for="productCode">Mã sản phẩm <span class="required">*</span></label>
+                                            </div>
+                                            <input type="text" class="form-control" name="productCode" id="productCode">
+                                        </div>
                                     </div>
                                     <div class="col-lg-3 col-md-4">
                                         <div class="form-group">
@@ -125,6 +131,42 @@
                                             </div>
                                             <input type="text" class="form-control text-price-input money"
                                                    name="salePrice" id="salePrice">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-9 col-md-8">
+                                        <div class="form-group">
+                                            <div>
+                                                <label class="required-label">Kích thước và số lượng <span class="required">*</span></label>
+                                            </div>
+                                            <div id="size-quantity-container">
+                                                <div class="row mb-2 size-quantity-row">
+                                                    <div class="col-md-6">
+                                                        <select class="form-control size-select">
+                                                            <option value="">Chọn kích thước</option>
+                                                            <option value="35">35</option>
+                                                            <option value="36">36</option>
+                                                            <option value="37">37</option>
+                                                            <option value="38">38</option>
+                                                            <option value="39">39</option>
+                                                            <option value="40">40</option>
+                                                            <option value="41">41</option>
+                                                            <option value="42">42</option>
+                                                            <option value="43">43</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="number" class="form-control quantity-input" placeholder="Số lượng" min="0">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <button type="button" class="btn btn-danger remove-size-row"><i class="fas fa-minus"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-info mt-2" id="add-size-row">
+                                                <i class="fas fa-plus"></i> Thêm kích thước
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -207,7 +249,6 @@
             return this.optional(element) || value >= 0;  // Kiểm tra nếu giá trị là số âm
         }, "Giá phải là số dương hoặc bằng 0");
 
-
         $.validator.addMethod("validPriceRange", function(value, element) {
             return this.optional(element) || (value >= 1000 && value <= 1000000000);  // Kiểm tra giá trị nằm trong khoảng 1000 đến 1 tỷ
         }, "Giá phải lớn hơn hoặc bằng 1 và nhỏ hơn hoặc bằng 1 tỷ!");
@@ -240,6 +281,15 @@
                 },
                 image:{
                     required:true,
+                },
+                productCode: {
+                    required: true,
+                },
+                size: {
+                    required: true,
+                },
+                quantity: {
+                    required: true,
                 }
             },
             messages: {
@@ -265,6 +315,15 @@
                 },
                 image:{
                     required:"Ảnh sản phẩm trống. Vui lòng chọn ảnh cho sản phẩm!",
+                },
+                productCode: {
+                    required: "Mã sản phẩm trống. Vui lòng nhập mã sản phẩm!",
+                },
+                size: {
+                    required: "Kích thước sản phẩm trống. Vui lòng chọn kích thước cho sản phẩm!",
+                },
+                quantity: {
+                    required: "Số lượng sản phẩm trống. Vui lòng nhập số lượng cho sản phẩm!",
                 }
             },
 
@@ -280,7 +339,15 @@
                 $('#list-product-image .grid-item .img-container .img-div img').each(function() {
                     productImgs.push($(this).attr('src'));
                 })
-
+                let productCode = $("#productCode").val();
+                let sizes = [];
+                let quantities = [];
+                $('.size-select').each(function() {
+                    sizes.push($(this).val());
+                })
+                $('.quantity-input').each(function() {
+                    quantities.push($(this).val());
+                })
                 req={
                     name:name,
                     description:description,
@@ -289,7 +356,10 @@
                     price:price,
                     salePrice:salePrice,
                     product_images:productImgs,
-                    status:status
+                    status:status,
+                    productCode: productCode,
+                    sizes: sizes,
+                    quantities: quantities
                 }
                 let myJson = JSON.stringify(req)
                 $.ajax({
@@ -312,6 +382,40 @@
         $.validator.addMethod("priceCom", function (value,element) {
 
         }, "Giá bán phải lớn hơn giá nhập sản phẩm. Vui lòng nhập lại giá bán!")
+
+        // Handle adding new size/quantity row
+        $('#add-size-row').click(function() {
+            let newRow = `
+                <div class="row mb-2 size-quantity-row">
+                    <div class="col-md-6">
+                        <select class="form-control size-select">
+                            <option value="">Chọn kích thước</option>
+                            <option value="35">35</option>
+                            <option value="36">36</option>
+                            <option value="37">37</option>
+                            <option value="38">38</option>
+                            <option value="39">39</option>
+                            <option value="40">40</option>
+                            <option value="41">41</option>
+                            <option value="42">42</option>
+                            <option value="43">43</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="number" class="form-control quantity-input" placeholder="Số lượng" min="0">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger remove-size-row"><i class="fas fa-minus"></i></button>
+                    </div>
+                </div>
+            `;
+            $('#size-quantity-container').append(newRow);
+        });
+
+        // Handle removing size/quantity row
+        $(document).on('click', '.remove-size-row', function() {
+            $(this).closest('.size-quantity-row').remove();
+        });
     </script>
 </th:block>
 </body>

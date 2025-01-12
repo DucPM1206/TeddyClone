@@ -159,9 +159,9 @@
 										</div>
 										<div class="info-div">
 											<label>Chi tiết đơn hàng</label>
-											<th:block th:if="${order.status} == 1">
+											<th:block th:if="${order.status <= 1}">
 												<button class="btn" onclick="openModalChangeDetailOrder()">
-													<i class="fas fa-edit"></i>
+													<i class="fas fa-plus"></i> Thêm sản phẩm
 												</button>
 											</th:block>
 											<div class="table-responsive">
@@ -170,39 +170,64 @@
 														<tr>
 															<th>Sản phẩm</th>
 															<th>Kích cỡ</th>
+															<th>Số lượng</th>
 															<th>Giá tiền</th>
 															<th>Khuyến mãi</th>
 															<th>Mức giảm</th>
 															<th>Thành tiền</th>
+															<th th:if="${order.status<= 1}">Thao tác</th>
 														</tr>
 													</thead>
 													<tbody>
-														<tr>
-															<td><a target="_blank"
-																th:href="@{/admin/products/{slug}/{id}(id=${order.product.id}, slug=${order.product.slug})}"
-																th:text="${order.product.name}"></a></td>
-															<td><span th:text="${order.size}"></span> <th:block
-																	th:if="${order.status} == 1">
-																	<span th:if="${sizeIsAvailable} == false"
-																		class="badge badge-danger">Hết hàng</span>
-																</th:block></td>
-															<td><span class="text-price"
-																th:text="${order.price}"></span> đ</td>
-															<td><span th:if="${order.promotion} != null"
-																th:text="${order.promotion.couponCode}"></span></td>
+														<tr th:each="detail : ${order.orderDetails}">
 															<td>
-																<div th:if="${order.promotion} != null">
-																	<th:block th:if="${order.promotion.discountType} == 1">
-																		<span th:text="${order.promotion.discountValue}"></span> %
-                                                                </th:block>
-																	<th:block th:if="${order.promotion.discountType} == 2">
-																		<span class="text-price"
-																			th:text="${order.promotion.discountValue}"></span> đ
-                                                                </th:block>
+																<a target="_blank" 
+																	th:href="@{/admin/products/{id}(id=${detail.product.id})}"
+																	th:text="${detail.product.name}">
+																</a>
+															</td>
+															<td>
+																<span th:text="${detail.size}"></span>
+																<th:block th:if="${order.status == 1}">
+																	<span th:if="${detail.product.sizes != null and !detail.product.sizes.contains(detail.size)}"
+																		class="badge badge-danger">Hết hàng</span>
+																</th:block>
+															</td>
+															<td th:text="${detail.quantity}"></td>
+															<td>
+																<span class="text-price" th:text="${detail.productPrice}"></span>đ
+															</td>
+															<td>
+																<span th:if="${detail.promotion != null}" th:text="${detail.promotion.name}"></span>
+															</td>
+															<td>
+																<div th:if="${detail.promotion != null}">
+																	<th:block th:if="${detail.promotion.discountType == 1}">
+																		<span th:text="${detail.promotion.discountValue}"></span>%
+																	</th:block>
+																	<th:block th:if="${detail.promotion.discountType == 2}">
+																		<span class="text-price" th:text="${detail.promotion.discountValue}"></span>đ
+																	</th:block>
 																</div>
 															</td>
-															<td><span class="text-price"
-																th:text="${order.totalPrice}"></span> đ</td>
+															<td>
+																<span class="text-price" th:text="${detail.subtotal}"></span>đ
+															</td>
+															<td>
+																<div class="actions">
+																	<button class="btn btn-danger"
+																		th:if="${order.status <= 1}"
+																		th:onclick="'removeOrderDetail(' + ${detail.id} + ')'">
+																		<i class="fas fa-trash"></i>
+																	</button>
+																</div>
+															</td>
+														</tr>
+														<tr>
+															<td colspan="6" class="text-right"><strong>Tổng tiền:</strong></td>
+															<td colspan="2">
+																<span class="text-price" th:text="${order.totalPrice}"></span>đ
+															</td>
 														</tr>
 													</tbody>
 												</table>
@@ -212,20 +237,22 @@
 									<div class="col-md-4">
 										<div class="edit-order-div">
 											<label>Trạng thái đơn hàng</label> <select name="status"
-												onchange="checkStatus(this)"
+												th:onchange="checkStatus(this)"
 												class="form-control thuy-search-select" id="status">
-												<option value="1" th:selected="${order.status} == 1">Chờ
+												<option value="0" th:selected="${order.status == 0}">Chờ
+													xác nhận</option>
+												<option value="1" th:selected="${order.status == 1}">Chờ
 													lấy hàng</option>
-												<option value="2" th:selected="${order.status} == 2">Đang
+												<option value="2" th:selected="${order.status == 2}">Đang
 													giao hàng</option>
-												<option value="3" th:selected="${order.status} == 3">Đã
+												<option value="3" th:selected="${order.status == 3}">Đã
 													giao hàng</option>
-												<option value="4" th:selected="${order.status} == 4">Đơn
+												<option value="4" th:selected="${order.status == 4}">Đơn
 													hàng bị trả lại</option>
 												<option value="5" id="cancel"
-													th:selected="${order.status} == 5">Đơn hàng bị hủy</option>
+													th:selected="${order.status == 5}">Đơn hàng bị hủy</option>
 												<option value="6" id="cancel"
-													th:selected="${order.status} == 6">Bán hàng tại quầy</option>
+													th:selected="${order.status == 6}">Bán hàng tại quầy</option>
 											</select> <br> <label>Ghi chú</label>
 											<textarea name="note" id="note" rows="5"
 												placeholder="Ghi chú" th:text="${order.note}"></textarea>
@@ -284,37 +311,36 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr>
-						<td><span th:text="${order.product.name}"></span></td>
-						<td><span th:text="${order.size}"></span> <th:block
+					<tr th:each="detail : ${order.orderDetails}">
+						<td><span th:text="${detail.product.name}"></span></td>
+						<td><span th:text="${detail.size}"></span> <th:block
 								th:if="${order.status} == 1">
-								<span th:if="${sizeIsAvailable} == false"
+								<span th:if="${detail.product.sizes != null and !detail.product.sizes.contains(detail.size)}"
 									class="badge badge-danger">Hết hàng</span>
 							</th:block></td>
-						<td><span class="text-price" th:text="${order.price}"></span>
-							đ</td>
-						<td><span th:if="${order.promotion} != null"
-							th:text="${order.promotion.couponCode}"></span></td>
+						<td><span class="text-price" th:text="${detail.productPrice}"></span>đ</td>
+						<td><span th:if="${detail.promotion != null}"
+							th:text="${detail.promotion.name}">
+						</span></td>
 						<td>
-							<div th:if="${order.promotion} != null">
-								<th:block th:if="${order.promotion.discountType} == 1">
-									<span th:text="${order.promotion.discountValue}"></span> %
+							<div th:if="${detail.promotion != null}">
+								<th:block th:if="${detail.promotion.discountType} == 1">
+									<span th:text="${detail.promotion.discountValue}"></span>%
                         </th:block>
-								<th:block th:if="${order.promotion.discountType} == 2">
+								<th:block th:if="${detail.promotion.discountType} == 2">
 									<span class="text-price"
-										th:text="${order.promotion.discountValue}"></span> đ
+										th:text="${detail.promotion.discountValue}"></span>đ
                         </th:block>
 							</div>
 						</td>
-						<td><span class="text-price" th:text="${order.totalPrice}"></span>
-							đ</td>
+						<td><span class="text-price" th:text="${detail.subtotal}"></span>đ</td>
 					</tr>
 				</tbody>
 			</table>
 			<div class="invoice-summary">
 				<p>
 					<strong>Tổng tiền cần thanh toán:</strong> <span
-						th:text="${order.totalPrice}"></span> đ
+						th:text="${order.totalPrice}"></span>đ
 				</p>
 			</div>
 		</section>
@@ -421,220 +447,245 @@
 
 	<th:block id="js-resources">
 		<script th:inline="javascript">
-		let initialStatus = $("#status").val();
-		if(initialStatus === "3"){
-			$("#cancel").prop("disabled", true);
-		}
-		function checkStatus(selectElement) {
-	        if (selectElement.value === "5") {
-	             $("#returnProduct").modal("show");
-	        }
-	    }
+			var initialStatus = /*[[${order.status}]]*/ 0; // Giá trị mặc định là 0
+			if (initialStatus === 3) {
+				$("#cancel").prop("disabled", true);
+			}
 
-		 $('.btn-confirm-return-product').click(function() {
-	        	let isValid = true;
-	        	let noteValue = $("#note-huy").val();
-	            if (noteValue == "") {
-	                noteInvalid = $("#note-huy").next();
-	                noteInvalid.css('display', 'block');
-	                noteInvalid.html('Vui lòng nhập lý do');
-	                isValid = false;
-	            }else {
-	                $("#note").next().css("display", "none");
-	            }
+			function checkStatus(selectElement) {
+				if (selectElement.value === "5") {
+					$("#returnProduct").modal("show");
+				}
+			}
 
-	            if (isValid) {
-	                $("#note").val(noteValue);
-	                $("#returnProduct").modal("hide");
-	            }
-	              
-	        })
-         $('.btn-huy').click(function() {
-        	 $("#status").val(initialStatus);
-        	 $("#returnProduct").modal("hide"); // Đóng modal
-	     })
-	        
-        var status = [[${order.status}]]
-        if (status == 1) {
-            let products = [[${products}]]
-            console.log(products)
-            let promotions = [[${promotions}]]
-            let productPrice = 0;
-            let promotionPrice = 0;
-            let totalPrice = 0;
+			$('.btn-confirm-return-product').click(function () {
+				let isValid = true;
+				let noteValue = $("#note-huy").val();
+				if (noteValue === "") {
+					let noteInvalid = $("#note-huy").next();
+					noteInvalid.css('display', 'block');
+					noteInvalid.html('Vui lòng nhập lý do');
+					isValid = false;
+				} else {
+					$("#note").next().css("display", "none");
+				}
 
-            function eventChangeProduct() {
-                let idProduct = $('#product').val();
-                let sizes = [];
-                for (product of products) {
-                    if (product.id == idProduct) {
-                        if (product.availableSizes != null) {
-                            sizes = product.availableSizes;
-                        }
-                        productPrice = product.price;
-                        totalPrice = product.price;
-                        break;
-                    }
-                }
+				if (isValid) {
+					$("#note").val(noteValue);
+					$("#returnProduct").modal("hide");
+				}
+			});
 
-                $('#size').empty();
-                for (size of sizes) {
-                    $("#size").append(new Option(size, size));
-                }
+			$('.btn-huy').click(function () {
+				$("#status").val(initialStatus);
+				$("#returnProduct").modal("hide"); // Đóng modal
+			});
+			
+			let orderDetails = /*[[${orderDetailsJson}]]*/ [];
+			var status = /*[[${order.status}]]*/ 0;
+			if (status <= 1) {
+				let products = /*[[${products}]]*/ [] || [];
+				let promotions = /*[[${promotions}]]*/ [] || [];
+				let productPrice = 0;
+				let promotionPrice = 0;
+				let totalPrice = 0;
 
-                calculatePrice();
-            }
+				function eventChangeProduct() {
+					if (!products || products.length === 0) return;
+					
+					let idProduct = $('#product').val();
+					let sizes = [];
+					for (let product of products) {
+						if (product.id === idProduct) {
+							if (product.availableSizes != null) {
+								sizes = product.availableSizes;
+							}
+							productPrice = product.price;
+							totalPrice = product.price;
+							break;
+						}
+					}
 
-            $('#product').change( function() {
-                eventChangeProduct();
-            });
+					$('#size').empty();
+					for (let size of sizes) {
+						$("#size").append(new Option(size, size));
+					}
 
-            $('#promotion').change( function() {
-                calculatePrice();
-            });
+					calculatePrice();
+				}
 
-            function calculatePrice() {
-                let codePromotion = $('#promotion').val();
-                if (codePromotion.length > 0) {
-                    for (promotion of promotions) {
-                        if (promotion.couponCode == codePromotion) {
-                            if (promotion.discountType == 1) {
-                                promotionPrice = productPrice * promotion.discountValue / 100;
-                                if (promotionPrice > promotion.maximumDiscountValue) {
-                                    promotionPrice = promotion.maximumDiscountValue;
-                                }
-                            } else {
-                                promotionPrice = promotion.discountValue;
-                            }
-                            totalPrice = productPrice - promotionPrice;
-                            if (totalPrice < 0) {
-                                totalPrice = 0;
-                            }
-                            break;
-                        }
-                    }
-                } else {
-                    totalPrice = productPrice;
-                    promotionPrice = 0;
-                }
+				$('#product').change(function () {
+					eventChangeProduct();
+				});
 
-                $('#product-price').text(productPrice);
-                $('#promotion-price').text(promotionPrice);
-                $('#total-price').text(totalPrice);
-            }
+				$('#promotion').change(function () {
+					calculatePrice();
+				});
 
-            function openModalChangeDetailOrder() {
-                $('.invalid-feedback').hide();
-                $('#product').val([[${order.product.id}]]);
-                let promotion = [[${order.promotion}]]
-                if (promotion != null) {
-                    $('#promotion').val(promotion.couponCode);
-                }
-                eventChangeProduct();
-                $('#size').val([[${order.size}]]);
-                $('#modal-change-detail-order').modal('show');
-            }
+				function calculatePrice() {
+					let codePromotion = $('#promotion').val();
+					if (codePromotion.length > 0) {
+						for (let promotion of promotions) {
+							if (promotion.couponCode === codePromotion) {
+								if (promotion.discountType === 1) {
+									promotionPrice = productPrice * promotion.discountValue / 100;
+									if (promotionPrice > promotion.maximumDiscountValue) {
+										promotionPrice = promotion.maximumDiscountValue;
+									}
+								} else {
+									promotionPrice = promotion.discountValue;
+								}
+								totalPrice = productPrice - promotionPrice;
+								if (totalPrice < 0) {
+									totalPrice = 0;
+								}
+								break;
+							}
+						}
+					} else {
+						totalPrice = productPrice;
+						promotionPrice = 0;
+					}
 
-            function changeDetailOrder() {
-                let product = $('#product').val();
-                let size = $('#size').val();
-                let promotion = $('#promotion').val();
-                if (size == null || size == "") {
-                    $('#invalid-feedback-product').show();
+					$('#product-price').text(productPrice);
+					$('#promotion-price').text(promotionPrice);
+					$('#total-price').text(totalPrice);
+				}
+
+				function openModalChangeDetailOrder() {
+					$('.invalid-feedback').hide();
+					let productId = orderDetails.length > 0 ? orderDetails[0].productId : null;
+					$('#product').val(productId);
+					let promotion = orderDetails.length > 0 ? orderDetails[0].promotion : null;
+					if (promotion != null) {
+						$('#promotion').val(promotion.couponCode);
+					}
+					eventChangeProduct();
+					$('#modal-change-detail-order').modal('show');
+				}
+
+				function changeDetailOrder() {
+					let product = $('#product').val();
+					let size = $('#size').val();
+					let promotion = $('#promotion').val();
+					if (size == null || size === "") {
+						$('#invalid-feedback-product').show();
+						return;
+					}
+
+					let req = {
+						product_id: product,
+						size: parseInt(size),
+						coupon_code: promotion,
+						total_price: totalPrice,
+						product_price: productPrice
+					};
+
+					let myJSON = JSON.stringify(req);
+					$.ajax({
+						url: '/api/admin/orders/update-detail/' + /*[[${order.id}]]*/ 0,
+						type: 'PUT',
+						data: myJSON,
+						contentType: "application/json; charset=utf-8",
+						success: function (data) {
+							toastr.success("Cập nhật thành công");
+							setTimeout(function () {
+								location.href = "/admin/orders/update/" + /*[[${order.id}]]*/ 0;
+							}, 1000);
+						},
+						error: function (error) {
+							toastr.warning(error.responseJSON.message);
+						},
+					});
+				}
+			
+			}
+
+            function removeOrderDetail(detailId) {
+                if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi đơn hàng?')) {
                     return;
                 }
 
-                req = {
-                    product_id: product,
-                    size: parseInt(size),
-                    coupon_code: promotion,
-                    total_price: totalPrice,
-                    product_price: productPrice
-                }
-
-                var myJSON = JSON.stringify(req);
+                let orderId = /*[[${order.id}]]*/ 0;
                 $.ajax({
-                    url: '/api/admin/orders/update-detail/'+[[${order.id}]],
-                    type: 'PUT',
-                    data: myJSON,
-                    contentType: "application/json; charset=utf-8",
-                    success: function(data) {
-                        toastr.success("Cập nhật thành công");
-                        setTimeout(function() {
-                            location.href = "/admin/orders/update/"+[[${order.id}]];
-                        }, 1000)
+                    url: `/api/admin/orders/${orderId}/details/${detailId}`,
+                    type: 'DELETE',
+                    success: function() {
+                        // Reload the page to show updated order
+                        location.reload();
                     },
-                    error: function(error) {
-                        toastr.warning(error.responseJSON.message);
-                    },
+                    error: function(xhr) {
+                        alert(xhr.responseText || 'Có lỗi xảy ra khi xóa sản phẩm');
+                    }
                 });
             }
-        }
 
-        $('.btn-print-invoice').click(function () {
-            const invoiceContent = document.getElementById("invoice-content");
-            if (invoiceContent) {
-                invoiceContent.style.display = 'block';
-                const originalContent = document.body.innerHTML;
-                document.body.innerHTML = invoiceContent.outerHTML;
-                window.print();
-                document.body.innerHTML = originalContent;
-                window.location.reload();
-            }
-        })
+			$('.btn-print-invoice').click(function () {
+				const invoiceContent = document.getElementById("invoice-content");
+				if (invoiceContent) {
+					invoiceContent.style.display = 'block';
+					const originalContent = document.body.innerHTML;
+					document.body.innerHTML = invoiceContent.outerHTML;
+					window.print();
+					document.body.innerHTML = originalContent;
+					window.location.reload();
+				}
+			});
 
-        $('.btn-update-order').click(function() {
-            $('.invalid-feedback').hide();
-            let receiverName = $('#receiver-name').val();
-            let receiverPhone = $('#receiver-phone').val();
-            let receiverAddress = $('#receiver-address').val();
-            let status = $('#status').val();
-            let note = $('#note').val();
-            let isValid = true;
+			$('.btn-update-order').click(function () {
+				$('.invalid-feedback').hide();
+				let receiverName = $('#receiver-name').val();
+				let receiverPhone = $('#receiver-phone').val();
+				let receiverAddress = $('#receiver-address').val();
+				let status = $('#status').val();
+				let note = $('#note').val();
+				let isValid = true;
 
-            if (receiverName.length == 0) {
-                $('#invalid-feedback-name').show();
-                isValid = false;
-            }
-            if (receiverPhone.length == 0) {
-                $('#invalid-feedback-phone').show();
-                isValid = false;
-            }
-            if (!/((09|03|07|08|05)+([0-9]{8})\b)/g.test(receiverPhone)) {
-                $('#invalid-feedback-form-phone').show();
-                isValid = false;
-            }
-            if (receiverAddress.length == 0) {
-                $('#invalid-feedback-address').show();
-                isValid = false;
-            }
-            if (isValid) {
-                req = {
-                    receiver_name: receiverName,
-                    receiver_phone: receiverPhone,
-                    receiver_address: receiverAddress,
-                    status: parseInt(status),
-                    note: note
-                }
-                var myJSON = JSON.stringify(req);
-                $.ajax({
-                    url: '/api/admin/orders/update-status/'+[[${order.id}]],
-                    type: 'PUT',
-                    data: myJSON,
-                    contentType: "application/json; charset=utf-8",
-                    success: function(data) {
-                        toastr.success("Cập nhật thành công");
-                        setTimeout(function() {
-                            location.href = "/admin/orders";
-                        }, 1000)
-                    },
-                    error: function(error) {
-                        toastr.warning(error.responseJSON.message);
-                    },
-                });
-            }
-        })
-    </script>
+				if (receiverName.length === 0) {
+					$('#invalid-feedback-name').show();
+					isValid = false;
+				}
+				if (receiverPhone.length === 0) {
+					$('#invalid-feedback-phone').show();
+					isValid = false;
+				}
+				if (!/((09|03|07|08|05)+([0-9]{8})\b)/g.test(receiverPhone)) {
+					$('#invalid-feedback-form-phone').show();
+					isValid = false;
+				}
+				if (receiverAddress.length === 0) {
+					$('#invalid-feedback-address').show();
+					isValid = false;
+				}
+				if (isValid) {
+					let req = {
+						receiver_name: receiverName,
+						receiver_phone: receiverPhone,
+						receiver_address: receiverAddress,
+						status: parseInt(status),
+						note: note
+					};
+					let myJSON = JSON.stringify(req);
+					$.ajax({
+						url: '/api/admin/orders/update-status/' + /*[[${order.id}]]*/ 0,
+						type: 'PUT',
+						data: myJSON,
+						contentType: "application/json; charset=utf-8",
+						success: function (data) {
+							toastr.success("Cập nhật thành công");
+							setTimeout(function () {
+								location.href = "/admin/orders";
+							}, 1000);
+						},
+						error: function (error) {
+							toastr.warning(error.responseJSON.message);
+						},
+					});
+				}
+			});
+		
+		</script>
 	</th:block>
+
 </body>
 </html>

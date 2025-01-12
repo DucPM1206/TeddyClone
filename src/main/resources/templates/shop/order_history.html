@@ -14,7 +14,7 @@
     <th:block id="css-resources">
         <style>
             .main-content .nav {
-                grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+                grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
             }
 
             @media (max-width: 767px) {
@@ -55,7 +55,8 @@
             <div class="main-content">
                 <div class="nav-tab">
                     <ul class="nav nav-pills" id="pills-tab" role="tablist">
-                        <li class="nav-item"><div class="nav-link active order-status" data-status="1">Chờ lấy hàng</div></li>
+                        <li class="nav-item"><div class="nav-link active order-status" data-status="0">Chờ xác nhận</div></li>
+                        <li class="nav-item"><div class="nav-link order-status" data-status="1">Chờ lấy hàng</div></li>
                         <li class="nav-item"><div class="nav-link order-status" data-status="2">Đang giao hàng</div></li>
                         <li class="nav-item"><div class="nav-link order-status" data-status="3">Đã giao hàng</div></li>
                         <li class="nav-item"><div class="nav-link order-status" data-status="4">Đơn hàng đã trả lại</div></li>
@@ -64,43 +65,6 @@
                 </div>
                 <div class="tab-content" id="pills-tabContent">
                     <div class="tab-pane fade show active" id="list-order" role="tabpanel" aria-labelledby="pending-tab">
-                        <th:block th:each="item : ${orderList}">
-                            <!-- Item -->
-                            <div class="item">
-                                <div class="header-item">
-                                    <div class="order-number-wrapper">
-                                        Mã đơn <a class="order-number" th:href="@{/tai-khoan/lich-su-giao-dich/{id}(id=${item.id})}" th:text="'#'+${item.id}"></a>
-                                    </div>
-                                    <a class="full-details" th:href="@{/tai-khoan/lich-su-giao-dich/{id}(id=${item.id})}">Xem chi tiết</a>
-                                </div>
-                                <div class="item-info-wrapper">
-                                    <div class="product-info-wrapper">
-                                        <div class="thumbnails"><img class="img-fluid" th:src="@{${item.productImg}}" th:alt="${item.productName}"/></div>
-                                        <div class="product-info"><span class="name" th:text="${item.productName}"></span>
-                                            <div class="size"><span th:text="${item.sizeVn}"></span></div>
-                                        </div>
-                                    </div>
-                                    <div class="price bid-price"><span class="text-price" th:text="${item.totalPrice}"></span> &#x20AB;</div>
-                                </div>
-                            </div>
-                            <!-- Item Small-->
-                            <div class="item-small">
-                                <div class="order-number-wrapper">
-                                    Mã đơn <a class="order-number" th:href="@{/tai-khoan/lich-su-giao-dich/{id}(id=${item.id})}" th:text="'#'+${item.id}"></a>
-                                </div>
-                                <div class="item-info-wrapper">
-                                    <div class="product-info-wrapper">
-                                        <div class="product-info">
-                                            <a class="name" th:href="@{/tai-khoan/lich-su-giao-dich/{id}(id=${item.id})}" th:text="${item.productName}"></a>
-                                            <div class="size">
-                                                <span th:text="${item.sizeVn}"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="price bid-price"><span class="text-price" th:text="${item.totalPrice}"></span> &#x20AB;</div>
-                                </div>
-                            </div>
-                        </th:block>
                     </div>
                 </div>
             </div>
@@ -109,17 +73,51 @@
 </main>
 
 <th:block id="js-resources">
-    <script>
+    <script th:inline="javascript">
         formatMoney();
-        $('.order-status').click(function() {
-            let status = $(this).data('status');
+
+        $(document).ready(function() {
+            $(".order-status").click(function() {
+                let status = $(this).attr("data-status");
+                $(".order-status").removeClass("active");
+                $(this).addClass("active");
+                $.ajax({
+                    url: "/api/get-order-list",
+                    type: "GET",
+                    data: {
+                        status: status
+                    },
+                    success: function(data) {
+                        showListOrder(data);
+                        formatMoney();
+                    },
+                    error: function(data) {
+                        toastr.warning(data.responseJSON.message);
+                    }
+                });
+            });
+
             $.ajax({
-                url: '/api/get-order-list?status='+status,
-                type: 'GET',
-                contentType: "application/json; charset=utf-8",
+                url: "/api/get-order-list",
+                type: "GET",
+                data: {
+                    status: 0
+                },
                 success: function(data) {
-                    $('.nav-link.active').toggleClass("active");
-                    $('.order-status[data-status='+status+']').toggleClass("active");
+                    // example data
+                    // [
+                    //     {
+                    //         "id": 10005,
+                    //         "totalPrice": 13000,
+                    //         "items": {
+                    //             "productName": "BBBB",
+                    //             "productImage": "/media/static/d8b4d2d1-7da9-44f0-aaa9-912158efe10d.png",
+                    //             "size": "35",
+                    //             "quantity": "1",
+                    //             "subtotal": "13000"
+                    //         }
+                    //     }
+                    // ]
                     showListOrder(data);
                     formatMoney();
                 },
@@ -127,12 +125,22 @@
                     toastr.warning(data.responseJSON.message);
                 }
             });
-        })
+        });
 
         function showListOrder(orders) {
-            let html = '';
-            for (order of orders) {
-                html += `
+            let html = ``;
+            if (orders.length == 0) {
+                html = `<div class="empty-order">
+                            <img src="/shop/images/noresult.png" alt="noresult.png" width="200px" height="200px"/>
+                            <p>Chưa có đơn hàng</p>
+                        </div>`;
+            } else {
+                for (let order of orders) {
+                    let items = JSON.parse(order.items);
+                    order.items = items;
+                    console.log(items);
+                    
+                    html += `
                             <div class="item">
                                 <div class="header-item">
                                     <div class="order-number-wrapper">
@@ -141,34 +149,40 @@
                                     <a class="full-details" href="/tai-khoan/lich-su-giao-dich/${order.id}">Xem chi tiết</a>
                                 </div>
                                 <div class="item-info-wrapper">
-                                    <div class="product-info-wrapper">
-                                        <div class="thumbnails"><img class="img-fluid" src="${order.productImg}" alt="${order.productName}"/></div>
-                                        <div class="product-info"><span class="name">${order.productName}</span>
-                                            <div class="size"><span>${order.sizeVn}</span></div>
+                                    ${items.map(item => `
+                                        <div class="product-info-wrapper">
+                                            <div class="thumbnails"><img class="img-fluid" src="${item.productImage}" alt="${item.productName}"/></div>
+                                            <div class="product-info">
+                                                <span class="name">${item.productName}</span>
+                                                <div class="size"><span>${item.size}</span></div>
+                                                <div class="quantity"><span>${item.quantity}</span> x <span class="text-price">${item.subtotal}</span> &#x20AB;</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="price bid-price"><span class="text-price">${order.totalPrice}</span> &#x20AB;</div>
+                                    `).join('')}
                                 </div>
+                                <div class="total-price">Tổng tiền: <span class="text-price">${order.totalPrice}</span> &#x20AB;</div>
                             </div>
                             <div class="item-small">
                                 <div class="order-number-wrapper">
                                     Mã đơn <a class="order-number" href="/tai-khoan/lich-su-giao-dich/${order.id}">#${order.id}</a>
                                 </div>
                                 <div class="item-info-wrapper">
-                                    <div class="product-info-wrapper">
-                                        <div class="product-info">
-                                            <a class="name" href="/tai-khoan/lich-su-giao-dich/${order.id}">${order.productName}</a>
-                                            <div class="size">
-                                                <span>${order.sizeVn}</span>
+                                    ${items.map(item => `
+                                        <div class="product-info-wrapper">
+                                            <div class="product-info">
+                                                <a class="name" href="/tai-khoan/lich-su-giao-dich/${order.id}">${item.productName}</a>
+                                                <div class="size"><span>${item.size}</span></div>
+                                                <div class="quantity"><span>${item.quantity}</span> x <span class="text-price">${item.subtotal}</span> &#x20AB;</div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="price bid-price"><span class="text-price">${order.totalPrice}</span> &#x20AB;</div>
+                                    `).join('')}
                                 </div>
+                                <div class="total-price">Tổng tiền: <span class="text-price">${order.totalPrice}</span> &#x20AB;</div>
                             </div>
-        `
+                        `;
+                }
             }
-            $('#list-order').html(html);
+            $("#list-order").html(html);
         }
     </script>
 </th:block>

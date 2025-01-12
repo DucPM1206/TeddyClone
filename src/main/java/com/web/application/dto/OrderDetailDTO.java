@@ -4,46 +4,33 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
+
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class OrderDetailDTO {
     private long id;
-
     private long totalPrice;
-
-    private long productPrice;
-
     private String receiverName;
-
     private String receiverPhone;
-
     private String receiverAddress;
-
     private int status;
+    private List<OrderItemDTO> orderItems;
 
-    private String statusText;
-
-    private int sizeVn;
-
-    private String productName;
-
-    private String productImg;
-
-    public OrderDetailDTO (long id, long totalPrice, long productPrice, String receiverName, String receiverPhone, String receiverAddress, int status, int sizeVn, String productName, String productImg) {
-        this.id = id;
-        this.totalPrice = totalPrice;
-        this.productPrice = productPrice;
-        this.receiverName = receiverName;
-        this.receiverPhone = receiverPhone;
-        this.receiverAddress = receiverAddress;
-        this.status = status;
-        this.sizeVn = sizeVn;
-        this.productName = productName;
-        this.productImg = productImg;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OrderItemDTO {
+        private String productName;
+        private String productImage;
+        private int size;
+        private int quantity;
+        private long productPrice;
+        private long subtotal;
+        private String statusText;
     }
 }

@@ -15165,7 +15165,7 @@ html.dark .note-editor .caret {
 }
 
 .table .actions, .table .actions-hover {
-    vertical-align: middle
+    vertical-align: middle;
 }
 
 .table .actions a, .table .actions-hover a {

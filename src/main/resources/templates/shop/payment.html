@@ -264,32 +264,36 @@
             }
 
             if (isValid) {
-                req = {
-                    product_id: [[${product.id}]],
-                    size: size,
-                    receiver_name: receiverName,
-                    receiver_phone: receiverPhone,
-                    receiver_address: receiverAddress,
-                    coupon_code: couponCode,
-                    total_price: totalPrice,
-                    product_price: price,
-                    note:notes
-                }
-                var myJSON = JSON.stringify(req);
+                const orderData = {
+                    items: [{
+                        productCode: [[${product.productCode}]],
+                        productName: [[${product.name}]],
+                        size: size,
+                        quantity: 1,
+                        price: price,
+                        discount: promotionValue,
+                        couponCode: couponCode
+                    }],
+                    receiverName: receiverName,
+                    receiverPhone: receiverPhone,
+                    receiverAddress: receiverAddress,
+                    note: notes || ""
+                };
+
                 $.ajax({
                     url: '/api/orders',
                     type: 'POST',
-                    data: myJSON,
+                    data: JSON.stringify(orderData),
                     contentType: "application/json; charset=utf-8",
                     success: function(data) {
                         toastr.success("Đặt hàng thành công");
                         setTimeout(function() {
-                            location.href = "/tai-khoan/lich-su-giao-dich/"+data;
+                            location.href = "/tai-khoan/lich-su-giao-dich/"+ data.orderId;
                         }, 1000)
                     },
                     error: function(data) {
                         toastr.warning(data.responseJSON.message);
-                    },
+                    }
                 });
             }
         })

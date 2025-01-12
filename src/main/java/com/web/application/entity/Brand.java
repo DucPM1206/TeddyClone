@@ -59,8 +59,8 @@ public class Brand {
     private Long id;
     @Column(name = "name",nullable = false,unique = true)
     private String name;
-    @Column(name = "description")
-    private String description;
+//     @Column(name = "description")
+//     private String description;
     @Column(name = "thumbnail")
     private String thumbnail;
     @Column(name = "status",columnDefinition = "BOOLEAN")

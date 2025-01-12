@@ -75,7 +75,7 @@ public class BrandServiceImpl implements BrandService {
 		System.out.println(rs.getName());
 		rs.setId(id);
 		rs.setName(createBrandRequest.getName());
-		rs.setDescription(createBrandRequest.getDescription());
+		// rs.setDescription(createBrandRequest.getDescription());
 		rs.setThumbnail(createBrandRequest.getThumbnail());
 		rs.setStatus(createBrandRequest.isStatus());
 		rs.setModifiedAt(new Timestamp(System.currentTimeMillis()));

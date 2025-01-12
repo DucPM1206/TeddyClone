@@ -20,6 +20,8 @@ import com.web.application.entity.Comment;
 public class DetailProductInfoDTO {
     private String id;
 
+    private String productCode;
+
     private String name;
 
     private String slug;
@@ -43,4 +45,6 @@ public class DetailProductInfoDTO {
     private Brand brand;
 
     private List<Comment> comments;
+
+    private String images; // First image from productImages list
 }

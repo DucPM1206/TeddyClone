@@ -16,7 +16,7 @@ import java.util.List;
 public interface OrderService {
 	Page<Order> adminGetListOrders(String id, String name, String phone, String status, String product, int page);
 
-	Order createOrder(CreateOrderRequest createOrderRequest, long userId);
+	Order createOrder(Order createOrderRequest, long userId);
 	Order createOrderAdmin(CreateOrderRequest createOrderRequest, long userId);
 
 	void updateDetailOrder(UpdateDetailOrder updateDetailOrder, long id, long userId);
@@ -33,7 +33,10 @@ public interface OrderService {
 
 	void userReturnOrder(long id, long userId, UpdateStatusOrderRequest updateStatusOrderRequest);
 
+	void removeOrderDetail(long orderId, long detailId);
+
 	// Đếm số lượng đơn hàng
 	long getCountOrder();
 
+	boolean isProductAvailableForOrder(String productId, int size);
 }

@@ -1,6 +1,7 @@
 package com.web.application.model.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,6 +9,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.validation.constraints.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -16,13 +19,7 @@ import javax.validation.constraints.*;
 @Getter
 public class CreateOrderRequest {
 
-    @NotBlank(message = "Sản phẩm trống")
-    @JsonProperty("product_id")
-    private String productId;
-
-    private int size;
-
-    @NotBlank(message = "Họ tên trống")
+    @NotNull(message = "Receiver name cannot be empty")
     @JsonProperty("receiver_name")
     private String receiverName;
 
@@ -35,15 +32,39 @@ public class CreateOrderRequest {
     @JsonProperty("receiver_address")
     private String receiverAddress;
 
-    @JsonProperty("coupon_code")
-    private String couponCode;
-
-    @JsonProperty("total_price")
-    private int totalPrice;
-
-    @JsonProperty("product_price")
-    private int productPrice;
-
     private String note;
 
+    @NotEmpty(message = "Order must contain at least one product")
+    private List<CartItem> items = new ArrayList<>();  
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @ToString
+    public static class CartItem {
+        @JsonProperty("productId")
+        private String productId;
+        
+        @JsonProperty("productCode")
+        private String productCode;
+        
+        @JsonProperty("productName")
+        private String productName;
+        
+        @JsonProperty("size")
+        private String size;
+        
+        @JsonProperty("quantity")
+        private int quantity;
+        
+        @JsonProperty("price")
+        private long price;
+
+        @JsonProperty("couponCode")
+        private String couponCode;
+
+        @JsonProperty("discount")
+        private Long discount = 0L;
+    }
 }

@@ -17,8 +17,8 @@ public class ProductMapper {
         productDTO.setPrice(product.getPrice());
         productDTO.setSalePrice(product.getSalePrice());
         productDTO.setDescription(product.getDescription());
-        productDTO.setImages(product.getImages());
-        productDTO.setFeedBackImages(product.getImageFeedBack());
+        productDTO.setProductImages(new ArrayList<>(product.getImages()));
+        productDTO.setFeedbackImages(new ArrayList<>(product.getImageFeedback()));
         productDTO.setTotalSold(product.getTotalSold());
         productDTO.setStatus(product.getStatus());
 
@@ -31,9 +31,10 @@ public class ProductMapper {
         product.setDescription(createProductRequest.getDescription());
         product.setPrice(createProductRequest.getPrice());
         product.setSalePrice(createProductRequest.getSalePrice());
-        product.setImages(createProductRequest.getImages());
-        product.setImageFeedBack(createProductRequest.getFeedBackImages());
+        product.setImages(createProductRequest.getProductImages());
+        product.setImageFeedback(createProductRequest.getFeedbackImages());
         product.setStatus(createProductRequest.getStatus());
+        product.setProductCode(createProductRequest.getProductCode());
         //Gen slug
         Slugify slug = new Slugify();
         product.setSlug(slug.slugify(createProductRequest.getName()));

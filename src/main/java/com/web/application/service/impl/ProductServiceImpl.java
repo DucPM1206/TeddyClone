@@ -34,6 +34,7 @@ import com.web.application.service.PromotionService;
 import com.web.application.utils.PageUtil;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,13 +73,27 @@ public class ProductServiceImpl implements ProductService {
             throw new BadRequestExp("Danh mục trống!");
         }
         //Kiểm tra có ảnh sản phẩm
-        if (createProductRequest.getImages().isEmpty()) {
+        if (createProductRequest.getProductImages().isEmpty()) {
             throw new BadRequestExp("Ảnh sản phẩm trống!");
         }
         //Kiểm tra tên sản phẩm trùng
         Product product = productRepository.findByName(createProductRequest.getName());
         if (product != null) {
             throw new BadRequestExp("Tên sản phẩm đã tồn tại trong hệ thống, Vui lòng chọn tên khác!");
+        }
+        
+        //Kiểm tra mã sản phẩm trùng
+        product = productRepository.findByProductCode(createProductRequest.getProductCode());
+        if (product != null) {
+            throw new BadRequestExp("Mã sản phẩm đã tồn tại trong hệ thống, Vui lòng chọn mã khác!");
+        }
+
+        //Kiểm tra kích thước và số lượng
+        if (createProductRequest.getSizes() == null || createProductRequest.getQuantities() == null) {
+            throw new BadRequestExp("Kích thước và số lượng sản phẩm không được để trống!");
+        }
+        if (createProductRequest.getSizes().size() != createProductRequest.getQuantities().size()) {
+            throw new BadRequestExp("Số lượng kích thước và số lượng không khớp!");
         }
 
         product = ProductMapper.toProduct(createProductRequest);
@@ -89,8 +104,19 @@ public class ProductServiceImpl implements ProductService {
         product.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
         try {
+            // Save product
             productRepository.save(product);
+
+            // Save product sizes and quantities
+            for (int i = 0; i < createProductRequest.getSizes().size(); i++) {
+                ProductSize productSize = new ProductSize();
+                productSize.setProductId(product.getId());
+                productSize.setSize(createProductRequest.getSizes().get(i));
+                productSize.setQuantity(createProductRequest.getQuantities().get(i));
+                productSizeRepository.save(productSize);
+            }
         } catch (Exception ex) {
+            // log exception for debug            
             throw new InternalServerExp("Lỗi khi thêm sản phẩm");
         }
         return product;
@@ -117,7 +143,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         //Kiểm tra có ảnh sản phẩm
-        if (createProductRequest.getImages().isEmpty()) {
+        if (createProductRequest.getProductImages().isEmpty()) {
             throw new BadRequestExp("Ảnh sản phẩm trống!");
         }
 
@@ -204,6 +230,7 @@ public class ProductServiceImpl implements ProductService {
         }
         DetailProductInfoDTO dto = new DetailProductInfoDTO();
         dto.setId(product.getId());
+        dto.setProductCode(product.getProductCode());
         dto.setName(product.getName());
         dto.setPrice(product.getSalePrice());
         dto.setViews(product.getView());
@@ -211,9 +238,14 @@ public class ProductServiceImpl implements ProductService {
         dto.setTotalSold(product.getTotalSold());
         dto.setDescription(product.getDescription());
         dto.setBrand(product.getBrand());
-        dto.setFeedbackImages(product.getImageFeedBack());
-        dto.setProductImages(product.getImages());
+        // dto.setFeedbackImages(product.getImageFeedBack());
+        dto.setProductImages(new ArrayList<>(product.getImages()));
         dto.setComments(product.getComments());
+
+        // Set the first image as the main image
+        if (!product.getImages().isEmpty()) {
+            dto.setImages(product.getImages().get(0));
+        }
 
         //Cộng sản phẩm xem
         product.setView(product.getView() + 1);
@@ -260,7 +292,7 @@ public class ProductServiceImpl implements ProductService {
         if (!isValid) {
             throw new BadRequestExp("Size không hợp lệ");
         }
-
+        System.out.println(createSizeCountRequest.getProductId());
         //Kiểm trả sản phẩm có tồn tại
         Optional<Product> product = productRepository.findById(createSizeCountRequest.getProductId());
         if (product.isEmpty()) {
@@ -396,7 +428,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product product = rs.get();
-        product.setImageFeedBack(req.getFeedBackImages());
+        // product.setImageFeedBack(req.getFeedBackImages());
         try {
             productRepository.save(product);
         } catch (Exception ex) {
