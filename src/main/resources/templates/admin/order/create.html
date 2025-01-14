@@ -292,16 +292,16 @@
                 body: JSON.stringify(order)
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
                 return response.json();
             })
             .then(data => {
+                if(data.code) {
+                    throw new Error(data.message);
+                }   
                 toastr.success("Tạo đơn hàng thành công");
                 setTimeout(function () {
                     location.href = "/admin/orders/update/" + data;
-                }, 1000);
+                }, 500);
             })
             .catch(error => {
                 toastr.warning(error.message);

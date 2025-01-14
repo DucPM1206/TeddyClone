@@ -108,30 +108,24 @@ public class OrderController {
 
 	@PostMapping("/api/admin/orders")
 	public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest createOrderRequest) {
-		try {
-			// Validate request
-			if (createOrderRequest == null || createOrderRequest.getItems() == null || createOrderRequest.getItems().isEmpty()) {
-				return ResponseEntity.badRequest()
-						.body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Order must contain at least one product"));
-			}
-
-			// Get current admin user
-			User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
-					.getUser();
-
-			// Create order
-			Order order = orderService.createOrderAdmin(createOrderRequest, user.getId());
-
-			// Return success response
-			return ResponseEntity.ok(order.getId());
-		} catch (BadRequestExp e) {
+		// Validate request
+		if (createOrderRequest == null || createOrderRequest.getItems() == null
+				|| createOrderRequest.getItems().isEmpty()) {
 			return ResponseEntity.badRequest()
-					.body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-							"Error creating order: " + e.getMessage()));
+					.body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
+							"Order must contain at least one product"));
 		}
+
+		// Get current admin user
+		User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+				.getUser();
+
+		// Create order
+		Order order = orderService.createOrderAdmin(createOrderRequest, user.getId());
+
+		// Return success response
+		return ResponseEntity.ok(order.getId());
+
 	}
 
 	@GetMapping("/admin/orders/update/{id}")

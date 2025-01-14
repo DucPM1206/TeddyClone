@@ -81,87 +81,84 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	public Order createOrderAdmin(CreateOrderRequest createOrderRequest, long userId) {
-		try {
-			// Create new order
-			Order order = new Order();
+		// Create new order
+		Order order = new Order();
 
-			// Set creator
-			User creator = new User();
-			creator.setId(userId);
-			order.setCreatedBy(creator);
-			order.setModifiedBy(creator);
+		// Set creator
+		User creator = new User();
+		creator.setId(userId);
+		order.setCreatedBy(creator);
+		order.setModifiedBy(creator);
 
-			// Set timestamps
-			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-			order.setCreatedAt(timestamp);
-			order.setModifiedAt(timestamp);
+		// Set timestamps
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		order.setCreatedAt(timestamp);
+		order.setModifiedAt(timestamp);
 
-			// Set order details from request
-			order.setReceiverName(createOrderRequest.getReceiverName());
-			order.setReceiverPhone(createOrderRequest.getReceiverPhone());
-			order.setReceiverAddress(createOrderRequest.getReceiverAddress());
-			order.setNote(createOrderRequest.getNote());
-			order.setStatus(Contant.COMPLETED_STATUS);
+		// Set order details from request
+		order.setReceiverName(createOrderRequest.getReceiverName());
+		order.setReceiverPhone(createOrderRequest.getReceiverPhone());
+		order.setReceiverAddress(createOrderRequest.getReceiverAddress());
+		order.setNote(createOrderRequest.getNote());
+		order.setStatus(Contant.COUNTER_STATUS);
 
-			// Calculate total price
-			long totalPrice = 0;
-			List<OrderDetail> orderDetails = new ArrayList<>();
+		// Calculate total price
+		long totalPrice = 0;
+		List<OrderDetail> orderDetails = new ArrayList<>();
 
-			// Process order items
-			for (CreateOrderRequest.CartItem item : createOrderRequest.getItems()) {
-				// Get product
-				Optional<Product> product = productRepository.findById(item.getProductId());
-				if (product.isEmpty()) {
-					throw new BadRequestExp("Product " + item.getProductId() + " not found");
-				}
-
-				// Validate size
-				int size = Integer.parseInt(item.getSize());
-				ProductSize productSize = productSizeRepository.findByProductIdAndSize(product.get().getId(), size)
-						.orElseThrow(() -> new BadRequestExp(
-								"Size " + size + " not available for product " + product.get().getName()));
-
-				if (productSize.getQuantity() < item.getQuantity()) {
-					throw new BadRequestExp(
-							"Not enough quantity for size " + size + " of product " + product.get().getName());
-				}
-
-				// Create order detail
-				OrderDetail orderDetail = new OrderDetail();
-				orderDetail.setOrder(order);
-				orderDetail.setProduct(product.get());
-				orderDetail.setSize(Integer.parseInt(item.getSize()));
-				orderDetail.setQuantity(item.getQuantity());
-				orderDetail.setProductPrice(item.getPrice());
-
-				// // Apply promotion if exists
-				if (item.getCouponCode() != null && !item.getCouponCode().isEmpty()) {
-					Promotion promotion = promotionService.checkPromotion(item.getCouponCode());
-					if (promotion != null) {
-						orderDetail.setDiscount(item.getDiscount());
-						orderDetail.setCouponCode(item.getCouponCode());
-						orderDetail.setPromotion(promotion);
-					}
-				}
-
-				totalPrice += (item.getPrice() - (item.getDiscount() != null ? item.getDiscount() : 0))
-						* item.getQuantity();
-				// Update product size quantity
-				productSize.setQuantity(productSize.getQuantity() - item.getQuantity());
-				productSizeRepository.save(productSize);
-
-				orderDetails.add(orderDetail);
+		// Process order items
+		for (CreateOrderRequest.CartItem item : createOrderRequest.getItems()) {
+			// Get product
+			Optional<Product> product = productRepository.findById(item.getProductId());
+			if (product.isEmpty()) {
+				throw new BadRequestExp("Product " + item.getProductId() + " not found");
 			}
 
-			order.setTotalPrice(totalPrice);
-			order.setOrderDetails(orderDetails);
+			// Validate size
+			int size = Integer.parseInt(item.getSize());
+			ProductSize productSize = productSizeRepository.findByProductIdAndSize(product.get().getId(), size)
+					.orElseThrow(() -> new BadRequestExp(
+							"Size " + size + " not available for product " + product.get().getName()));
 
-			// Save order with cascade
+			if (productSize.getQuantity() < item.getQuantity()) {
+				throw new BadRequestExp(
+						"Không đủ số luong size " + size + " trong hệ thống cho sản phẩm " + product.get().getName());
+			}
 
-			return orderRepository.save(order);
-		} catch (Exception e) {
-			throw new InternalServerExp("Error saving order: " + e.getMessage());
+			// Create order detail
+			OrderDetail orderDetail = new OrderDetail();
+			orderDetail.setOrder(order);
+			orderDetail.setProduct(product.get());
+			orderDetail.setSize(Integer.parseInt(item.getSize()));
+			orderDetail.setQuantity(item.getQuantity());
+			orderDetail.setProductPrice(item.getPrice());
+
+			// // Apply promotion if exists
+			if (item.getCouponCode() != null && !item.getCouponCode().isEmpty()) {
+				Promotion promotion = promotionService.checkPromotion(item.getCouponCode());
+				if (promotion != null) {
+					orderDetail.setDiscount(item.getDiscount());
+					orderDetail.setCouponCode(item.getCouponCode());
+					orderDetail.setPromotion(promotion);
+				}
+			}
+
+			totalPrice += (item.getPrice() - (item.getDiscount() != null ? item.getDiscount() : 0))
+					* item.getQuantity();
+			// Update product size quantity
+			productSize.setQuantity(productSize.getQuantity() - item.getQuantity());
+			productSizeRepository.save(productSize);
+
+			orderDetails.add(orderDetail);
 		}
+
+		order.setTotalPrice(totalPrice);
+		order.setOrderDetails(orderDetails);
+
+		// Save order with cascade
+
+		return orderRepository.save(order);
+
 	}
 
 	@Override
