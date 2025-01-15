@@ -132,19 +132,6 @@ public class OrderServiceImpl implements OrderService {
 			orderDetail.setSize(Integer.parseInt(item.getSize()));
 			orderDetail.setQuantity(item.getQuantity());
 			orderDetail.setProductPrice(item.getPrice());
-
-			// // Apply promotion if exists
-			if (item.getCouponCode() != null && !item.getCouponCode().isEmpty()) {
-				Promotion promotion = promotionService.checkPromotion(item.getCouponCode());
-				if (promotion != null) {
-					orderDetail.setDiscount(item.getDiscount());
-					orderDetail.setCouponCode(item.getCouponCode());
-					orderDetail.setPromotion(promotion);
-				}
-			}
-
-			totalPrice += (item.getPrice() - (item.getDiscount() != null ? item.getDiscount() : 0))
-					* item.getQuantity();
 			// Update product size quantity
 			productSize.setQuantity(productSize.getQuantity() - item.getQuantity());
 			productSizeRepository.save(productSize);
@@ -152,13 +139,31 @@ public class OrderServiceImpl implements OrderService {
 			orderDetails.add(orderDetail);
 		}
 
-		order.setTotalPrice(totalPrice);
+		// Apply promotion if exists
+		if (createOrderRequest.getCouponCode() != null && !createOrderRequest.getCouponCode().isEmpty()) {
+			Promotion promotion = promotionService.checkPromotion(createOrderRequest.getCouponCode());
+			if (promotion != null) {
+				order.setDiscount(createOrderRequest.getDiscount());
+				order.setCouponCode(createOrderRequest.getCouponCode());
+				order.setPromotion(promotion);
+			}
+		}
+
 		order.setOrderDetails(orderDetails);
 
 		// Save order with cascade
+		order = orderRepository.save(order);
 
-		return orderRepository.save(order);
+		// Calculate total price
+		totalPrice = 0;
+		for (OrderDetail detail : order.getOrderDetails()) {
+			totalPrice += detail.getProductPrice()
+					* detail.getQuantity();
+		}
+		order.setTotalPrice(totalPrice);
+		orderRepository.save(order);
 
+		return order;
 	}
 
 	@Override
@@ -178,6 +183,16 @@ public class OrderServiceImpl implements OrderService {
 
 		// Save order first to get order ID
 		Order savedOrder = orderRepository.save(order);
+
+		// find promotion
+		if (order.getCouponCode() != null && !order.getCouponCode().isEmpty()) {
+            Promotion promotion = promotionService.checkPromotion(order.getCouponCode());
+            if (promotion != null) {
+                order.setPromotion(promotion);
+            }
+        }
+		System.out.println(order.getDiscount());
+		System.out.println(order.getCouponCode());
 
 		// Now validate and process each order detail
 		for (OrderDetail detail : order.getOrderDetails()) {
@@ -200,20 +215,29 @@ public class OrderServiceImpl implements OrderService {
 				throw new BadRequestExp("Giá sản phẩm thay đổi, Vui lòng đặt hàng lại!");
 			}
 
-			// find promotion
-			Promotion promotion = promotionService.checkPromotion(detail.getCouponCode());
-			if (promotion != null) {
-				detail.setDiscount(detail.getDiscount());
-				detail.setCouponCode(detail.getCouponCode());
-				detail.setPromotion(promotion);
-			}
 			// Set the saved order reference and validated product
 			detail.setOrder(savedOrder);
 			detail.setProduct(product.get());
 		}
 
 		// Save again to persist order details
-		return orderRepository.save(savedOrder);
+		order = orderRepository.save(savedOrder);
+
+		// Calculate total price
+		long totalPrice = 0;
+		for (OrderDetail detail : order.getOrderDetails()) {
+			totalPrice += detail.getProductPrice() * detail.getQuantity();
+		}
+
+		// Apply discount if promotion exists
+		if (order.getPromotion() != null) {
+			totalPrice -= order.getDiscount();
+		}
+
+		order.setTotalPrice(totalPrice);
+		orderRepository.save(order);
+
+		return order;
 	}
 
 	@Override
@@ -253,12 +277,9 @@ public class OrderServiceImpl implements OrderService {
 			if (promotion == null) {
 				throw new NotFoundExp("Mã khuyến mãi không tồn tại hoặc chưa được kích hoạt");
 			}
-			long promotionPrice = promotionService.calculatePromotionPrice(
-					updateDetailOrder.getProductPrice(),
-					promotion);
-			if (promotionPrice != updateDetailOrder.getTotalPrice()) {
-				throw new BadRequestExp("Tổng giá trị đơn hàng thay đổi. Vui lòng kiểm tra và đặt lại đơn hàng");
-			}
+			order.setPromotion(promotion);
+			order.setCouponCode(updateDetailOrder.getCouponCode());
+			order.setDiscount(promotion.getDiscountValue());
 		}
 
 		// Update order details
@@ -276,8 +297,6 @@ public class OrderServiceImpl implements OrderService {
 			details.add(detail);
 			order.setOrderDetails(details);
 		} else {
-			// print coupon code
-			System.out.println("updateDetailOrder.getCouponCode(): " + updateDetailOrder.getCouponCode());
 			// add new detail
 			OrderDetail detail = new OrderDetail();
 			detail.setOrder(order);
@@ -285,16 +304,7 @@ public class OrderServiceImpl implements OrderService {
 			detail.setSize(updateDetailOrder.getSize());
 			detail.setProductPrice(updateDetailOrder.getProductPrice());
 			detail.setQuantity(1);
-			detail.setCouponCode(updateDetailOrder.getCouponCode());
-			// find promotion
-			if (updateDetailOrder.getCouponCode() != null && !updateDetailOrder.getCouponCode().isEmpty()) {
-				Promotion promotion = promotionService.checkPromotion(updateDetailOrder.getCouponCode());
-				if (promotion != null) {
-					detail.setPromotion(promotion);
-					detail.setDiscount(promotion.getDiscountValue());
-				}
-			}
-			detail.setSubtotal(updateDetailOrder.getTotalPrice());
+
 			// save detail to db
 			orderDetailRepository.save(detail);
 
@@ -302,6 +312,9 @@ public class OrderServiceImpl implements OrderService {
 			details.add(detail);
 			order.setOrderDetails(details);
 		}
+
+		// Save order to trigger price calculation
+		orderRepository.save(order);
 
 		// Update order
 		order.setModifiedAt(new Timestamp(System.currentTimeMillis()));
@@ -329,13 +342,11 @@ public class OrderServiceImpl implements OrderService {
 	public Order findOrderById(long id) {
 		Order order = orderRepository.findById(id)
 				.orElseThrow(() -> new NotFoundExp("Order not found with id " + id));
-
+		order.getCouponCode();
+		order.getPromotion();
 		// Initialize the orderDetails collection and product for each detail
 		order.getOrderDetails().forEach(detail -> {
 			detail.getProduct().getName(); // Force initialization of product
-			if (detail.getPromotion() != null) {
-				detail.getPromotion().getName(); // Force initialization of promotion
-			}
 		});
 
 		return order;
@@ -373,14 +384,14 @@ public class OrderServiceImpl implements OrderService {
 				for (OrderDetail detail : order.getOrderDetails()) {
 					productSizeRepository.minusOneProductBySize(
 							String.valueOf(detail.getProduct().getId()),
-							detail.getSize());
+							detail.getSize(), detail.getQuantity());
 				}
 			} else if (updateStatusOrderRequest.getStatus() == Contant.COMPLETED_STATUS) {
 				// Trừ đi một sản phẩm và cộng một sản phẩm vào sản phẩm đã bán và cộng tiền
 				for (OrderDetail detail : order.getOrderDetails()) {
 					productSizeRepository.minusOneProductBySize(
 							String.valueOf(detail.getProduct().getId()),
-							detail.getSize());
+							detail.getSize(), detail.getQuantity());
 					productRepository.plusOneProductTotalSold(detail.getProduct().getId());
 				}
 				statistic(order.getTotalPrice(), getTotalQuantity(order), order);
@@ -401,14 +412,14 @@ public class OrderServiceImpl implements OrderService {
 				for (OrderDetail detail : order.getOrderDetails()) {
 					productSizeRepository.plusOneProductBySize(
 							String.valueOf(detail.getProduct().getId()),
-							detail.getSize());
+							detail.getSize(), detail.getQuantity());
 				}
 			} else if (updateStatusOrderRequest.getStatus() == Contant.CANCELED_STATUS) {
 				// Cộng lại một sản phẩm đã bị trừ
 				for (OrderDetail detail : order.getOrderDetails()) {
 					productSizeRepository.plusOneProductBySize(
 							String.valueOf(detail.getProduct().getId()),
-							detail.getSize());
+							detail.getSize(), detail.getQuantity());
 				}
 			} else if (updateStatusOrderRequest.getStatus() != Contant.DELIVERY_STATUS) {
 				throw new BadRequestExp("Không thế chuyển sang trạng thái này");
@@ -421,7 +432,7 @@ public class OrderServiceImpl implements OrderService {
 				for (OrderDetail detail : order.getOrderDetails()) {
 					productSizeRepository.plusOneProductBySize(
 							String.valueOf(detail.getProduct().getId()),
-							detail.getSize());
+							detail.getSize(), detail.getQuantity());
 					productRepository.minusOneProductTotalSold(detail.getProduct().getId());
 				}
 				updateStatistic(order.getTotalPrice(), getTotalQuantity(order), order);
@@ -636,7 +647,7 @@ public class OrderServiceImpl implements OrderService {
 		// Recalculate total price
 		long totalPrice = 0;
 		for (OrderDetail detail : order.getOrderDetails()) {
-			totalPrice += (detail.getProductPrice() - detail.getDiscount()) * detail.getQuantity();
+			totalPrice += (detail.getProductPrice()) * detail.getQuantity();
 		}
 		order.setTotalPrice(totalPrice);
 		orderRepository.save(order);

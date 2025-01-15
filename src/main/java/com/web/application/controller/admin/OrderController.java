@@ -131,52 +131,20 @@ public class OrderController {
 	@GetMapping("/admin/orders/update/{id}")
 	public String updateOrderPage(Model model, @PathVariable long id) {
 		Order order = orderService.findOrderById(id);
-		model.addAttribute("order", order);
+		List<ShortProductInfoDTO> products = productService.getListProduct();
+		List<Promotion> promotions = promotionService.getAllValidPromotion();
 
-		// Convert order details to JSON string
+		// Convert order details to JSON for JavaScript
 		try {
-			// Create a simplified version of order details for JSON
-			List<Map<String, Object>> simplifiedDetails = order.getOrderDetails().stream()
-					.map(detail -> {
-						Map<String, Object> map = new HashMap<>();
-						map.put("id", detail.getId());
-						map.put("productId", detail.getProduct().getId());
-						map.put("productName", detail.getProduct().getName());
-						map.put("size", detail.getSize());
-						map.put("quantity", detail.getQuantity());
-						map.put("price", detail.getProductPrice());
-						return map;
-					})
-					.collect(Collectors.toList());
-
-			String orderDetailsJson = objectMapper.writeValueAsString(simplifiedDetails);
+			String orderDetailsJson = objectMapper.writeValueAsString(order.getOrderDetails());
 			model.addAttribute("orderDetailsJson", orderDetailsJson);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			model.addAttribute("orderDetailsJson", "[]");
 		}
 
-		if (order.getStatus() == Contant.ORDER_STATUS) {
-			// Get list product to select
-			List<ShortProductInfoDTO> products = productService.getAvailableProducts();
-			model.addAttribute("products", products);
-
-			// Get list valid promotion
-			List<Promotion> promotions = promotionService.getAllValidPromotion();
-			model.addAttribute("promotions", promotions);
-
-			// Check size availability for each product in the order
-			if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty()) {
-				List<Boolean> sizeAvailabilityList = order.getOrderDetails().stream()
-						.map(detail -> productService.checkProductSizeAvailable(
-								detail.getProduct().getId(),
-								detail.getSize()))
-						.toList();
-				model.addAttribute("sizeAvailabilityList", sizeAvailabilityList);
-			}
-
-			// Add size range for product selection
-			model.addAttribute("sizeVn", Contant.SIZE_VN);
-		}
+		model.addAttribute("order", order);
+		model.addAttribute("products", products);
+		model.addAttribute("promotions", promotions);
 
 		return "admin/order/edit";
 	}
