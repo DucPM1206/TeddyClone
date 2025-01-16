@@ -206,6 +206,9 @@
             
             const subtotal = (price - discount) * quantity;
 
+            console.log(price, discount, quantity, subtotal);
+            
+
             row.querySelector('.product-price').textContent = formatMoney(price * quantity) + 'đ';
             row.querySelector('.subtotal').textContent = formatMoney(subtotal) + 'đ';
 
@@ -217,7 +220,7 @@
             let totalDiscount = 0;
 
             document.querySelectorAll('.product-row').forEach(row => {
-                subtotal += parseInt(row.querySelector('.product-price').textContent.replace('đ', '').replace('.', '')) || 0;
+                subtotal += parseInt(row.querySelector('.product-price').textContent.replace('đ', '').replaceAll('.', '')) || 0;
             });
             let discountValue = 0;
             if (document.getElementById('coupon-code').value) {
@@ -226,6 +229,11 @@
             }
             totalDiscount = discountValue;
             const total = subtotal - totalDiscount;
+
+            console.log("subtotal: ", subtotal);
+            console.log("totalDiscount: ", totalDiscount);
+            console.log("total: ", total);
+            
             
             document.getElementById('subtotal').textContent = formatMoney(subtotal) + 'đ';
             document.getElementById('discount').textContent = formatMoney(totalDiscount) + 'đ';
@@ -270,7 +278,7 @@
             const receiverAddress = document.getElementById('receiver-address').value;
             const note = document.getElementById('receiver-note').value;
             const couponCode = document.getElementById('coupon-code').value;
-            let discountValue = parseInt(document.getElementById('discount').textContent.replace('đ', '').replace('.', ''));
+            let discountValue = parseInt(document.getElementById('discount').textContent.replace('đ', '').replaceAll('.', ''));
 
             if (!receiverName || !receiverPhone || !receiverAddress) {
                 alert('Vui lòng điền đầy đủ thông tin người nhận');
@@ -282,7 +290,7 @@
                 const productId = row.querySelector('.product-select').value;
                 const size = row.querySelector('.size-select').value;
                 const quantity = parseInt(row.querySelector('.quantity-input').value);
-                const productPriceNow = row.querySelector('.product-price').textContent.replace('đ', '').replace('.', '');
+                const productPriceNow = row.querySelector('.product-price').textContent.replace('đ', '').replaceAll('.', '');
 
                 if (productId && size) {
                     items.push({

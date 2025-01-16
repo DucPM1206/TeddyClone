@@ -19,7 +19,7 @@ $(document).ready(function () {
     // Add item to cart
     addItem(productCode, productName, size, price, imageUrl) {
       const existingItem = this.cart.find(
-        (item) => item.productCode === productCode && item.size === size
+        (item) => item.productCode === productCode && item.size == size
       );
 
       if (existingItem) {
@@ -42,16 +42,18 @@ $(document).ready(function () {
     // Remove item from cart
     removeItem(productCode, size) {
       this.cart = this.cart.filter(
-        (item) => !(item.productCode === productCode && item.size === size)
+        (item) => !(item.productCode === productCode && item.size == size)
       );
       this.updateCartDisplay();
     }
 
     // Update item quantity
     async updateQuantity(productCode, size, quantity) {
+      console.log(this.cart, productCode, size, quantity);
       const item = this.cart.find(
-        (item) => item.productCode === productCode && item.size === size
+        (item) => item.productCode === productCode && item.size == size
       );
+      
       
       if (item && quantity > 0) {
         try {
@@ -250,7 +252,7 @@ $(document).ready(function () {
           }
         });
 
-        item.querySelector('.increase-quantity')?.addEventListener('click', () => {
+        item.querySelector('.increase-quantity')?.addEventListener('click', () => {          
           const newQuantity = parseInt(quantityInput.value) + 1;
           this.updateQuantity(productCode, size, newQuantity);
         });
